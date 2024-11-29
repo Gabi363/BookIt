@@ -29,7 +29,7 @@ public class AccountService {
 
 
     public Optional<UserDto> createUser(CreateUserRequest request) {
-        if(userRepository.getUserByEmail(request.getEmail()).isPresent()) {
+        if(userRepository.findByEmail(request.getEmail()).isPresent()) {
             return Optional.empty();
         }
 
