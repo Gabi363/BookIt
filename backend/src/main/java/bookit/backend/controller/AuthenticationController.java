@@ -5,7 +5,7 @@ import bookit.backend.model.request.CreateUserRequest;
 import bookit.backend.model.request.LoginRequest;
 import bookit.backend.model.request.RefreshTokenRequest;
 import bookit.backend.model.response.LoginResponse;
-import bookit.backend.model.response.UserResponse;
+import bookit.backend.model.response.user.UserResponse;
 import bookit.backend.service.AccountService;
 import bookit.backend.service.JwtService;
 import bookit.backend.service.UserService;

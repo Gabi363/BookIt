@@ -59,6 +59,7 @@ public class AccountService {
                 .password(hashPassword(request.getPassword()))
                 .phoneNumber(request.getPhoneNumber())
                 .userRole(request.getUserRole())
+                .isActive(true)
                 .build();
         userRepository.save(user);
         return Optional.ofNullable(modelMapper.map(user, AdminUserDto.class));
@@ -72,6 +73,7 @@ public class AccountService {
                 .password(hashPassword(request.getPassword()))
                 .phoneNumber(request.getPhoneNumber())
                 .userRole(request.getUserRole())
+                .isActive(true)
                 .nip(request.getNip())
                 .build();
         userRepository.save(user);
@@ -86,6 +88,7 @@ public class AccountService {
                 .password(hashPassword(request.getPassword()))
                 .phoneNumber(request.getPhoneNumber())
                 .userRole(request.getUserRole())
+                .isActive(true)
                 .build();
         userRepository.save(user);
         return Optional.ofNullable(modelMapper.map(user, WorkerUserDto.class));
@@ -99,15 +102,14 @@ public class AccountService {
                 .password(hashPassword(request.getPassword()))
                 .phoneNumber(request.getPhoneNumber())
                 .userRole(request.getUserRole())
+                .isActive(true)
                 .build();
         userRepository.save(user);
         return Optional.ofNullable(modelMapper.map(user, ClientUserDto.class));
     }
 
     String hashPassword(String password) {
-        var hashPassword = bCryptPasswordEncoder.encode(password);
-        log.info(hashPassword);
-        return hashPassword;
+        return bCryptPasswordEncoder.encode(password);
     }
 
     public Optional<UserDto> login(LoginRequest request) {

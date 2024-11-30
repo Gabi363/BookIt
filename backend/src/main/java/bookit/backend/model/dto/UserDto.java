@@ -21,4 +21,5 @@ public class UserDto implements Serializable {
     private String password;
     private String phoneNumber;
     private UserRole userRole;
+    private Boolean isActive;
 }

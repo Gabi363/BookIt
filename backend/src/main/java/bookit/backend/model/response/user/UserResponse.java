@@ -1,4 +1,4 @@
-package bookit.backend.model.response;
+package bookit.backend.model.response.user;
 
 import bookit.backend.model.dto.UserDto;
 import lombok.AllArgsConstructor;

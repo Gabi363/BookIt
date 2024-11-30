@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.io.Serializable;
 
@@ -42,4 +43,8 @@ public class User implements Serializable {
     @Column(name = "user_role", nullable = false)
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
+
+    @Column(name = "is_active", nullable = false)
+    @ColumnDefault("true")
+    private Boolean isActive;
 }

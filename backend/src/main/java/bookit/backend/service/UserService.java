@@ -1,6 +1,6 @@
 package bookit.backend.service;
 
-import bookit.backend.model.dto.UserDto;
+import bookit.backend.model.dto.*;
 import bookit.backend.model.entity.user.User;
 import bookit.backend.model.enums.UserRole;
 import bookit.backend.repository.UserRepository;
@@ -39,13 +39,31 @@ public class UserService implements UserDetailsService {
                 .map(user -> modelMapper.map(user, UserDto.class));
     }
 
+    public Optional<AdminUserDto> getAdminUserById(long id) {
+        return userRepository.findById(id)
+                .map(user -> modelMapper.map(user, AdminUserDto.class));
+    }
+
+    public Optional<BusinessOwnerUserDto> getBusinessOwnerUserById(long id) {
+        return userRepository.findById(id)
+                .map(user -> modelMapper.map(user, BusinessOwnerUserDto.class));
+    }
+
+    public Optional<WorkerUserDto> getWorkerUserById(long id) {
+        return userRepository.findById(id)
+                .map(user -> modelMapper.map(user, WorkerUserDto.class));
+    }
+
+    public Optional<ClientUserDto> getClientUserById(long id) {
+        return userRepository.findById(id)
+                .map(user -> modelMapper.map(user, ClientUserDto.class));
+    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Optional<User> user = userRepository.findByEmail(username);
 
         return (UserDetails) user.orElseThrow();
-//        return user.get().orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 
     public Collection<? extends GrantedAuthority> mapRoleToAuthority(UserRole role) {

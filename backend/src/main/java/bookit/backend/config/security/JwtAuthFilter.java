@@ -39,7 +39,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             if (jwtService.validateToken(token, userDto)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDto,
+                        userDto.getId(),
                         null,
                         userService.mapRoleToAuthority(userDto.getUserRole())
                 );
