@@ -4,10 +4,11 @@ import bookit.backend.model.enums.UserRole;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
+@Setter
 public class CreateUserRequest {
     @NotBlank
     private String firstName;
@@ -18,7 +19,7 @@ public class CreateUserRequest {
     private String password;
     @NotBlank
     private String phoneNumber;
-    @NotNull
+    @Nullable
     private UserRole userRole;
     @Nullable
     private String nip;

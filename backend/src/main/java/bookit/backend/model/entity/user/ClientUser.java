@@ -4,12 +4,16 @@ import bookit.backend.model.entity.Calendar;
 import bookit.backend.model.entity.points.ClientPoints;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
 @Entity
 @Table(name = "client_users")
 @Data
+@NoArgsConstructor
+@SuperBuilder
 public class ClientUser extends User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)

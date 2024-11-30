@@ -1,10 +1,14 @@
 package bookit.backend.controller;
 
+import bookit.backend.model.dto.UserDto;
 import bookit.backend.model.enums.UserRole;
+import bookit.backend.model.request.CreateUserRequest;
 import bookit.backend.model.response.user.BusinessOwnerUserResponse;
 import bookit.backend.model.response.user.UserListResponse;
 import bookit.backend.model.response.user.UserResponse;
+import bookit.backend.service.AccountService;
 import bookit.backend.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
@@ -14,9 +18,9 @@ import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 
 @RestController
@@ -27,6 +31,7 @@ public class UserController {
 
     private final UserService userService;
     private final ModelMapper modelMapper;
+    private final AccountService accountService;
 
     @GetMapping
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -60,6 +65,30 @@ public class UserController {
         }
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Account does not exist!");
+    }
+
+    @PostMapping("/{userId}")
+    @ManagedOperation(description = "Update user's information")
+    public ResponseEntity<?> updateUser(@Valid @RequestBody CreateUserRequest request,
+                                        @PathVariable long userId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        long currentId = modelMapper.map(auth.getPrincipal(), long.class);
+        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
+
+        if(role != UserRole.ADMIN && userId != currentId) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        var oldRole = userService.getUserRole(userId).orElse(null);
+        if(oldRole == null) return ResponseEntity.status(HttpStatus.CONFLICT).body("Account does not exist!");
+        if(userId == currentId) request.setUserRole(null);
+
+        Optional<UserDto> updatedUser = accountService.updateUser(request, userId, oldRole);
+
+        if(updatedUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Account does not exist!");
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
 }

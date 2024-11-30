@@ -1,8 +1,7 @@
 package bookit.backend.service;
 
 import bookit.backend.model.dto.*;
-import bookit.backend.model.entity.user.AdminUser;
-import bookit.backend.model.entity.user.BusinessOwnerUser;
+import bookit.backend.model.entity.user.*;
 import bookit.backend.model.enums.UserRole;
 import bookit.backend.model.request.CreateUserRequest;
 import bookit.backend.model.request.LoginRequest;
@@ -29,11 +28,10 @@ public class AccountService {
 
 
     public Optional<UserDto> createUser(CreateUserRequest request) {
-        if(userRepository.findByEmail(request.getEmail()).isPresent()) {
+        UserRole role = request.getUserRole();
+        if(userRepository.findByEmail(request.getEmail()).isPresent() || role == null) {
             return Optional.empty();
         }
-
-        UserRole role = request.getUserRole();
         switch (role) {
             case ADMIN -> {
                 return createAdminAccount(request);
@@ -48,7 +46,27 @@ public class AccountService {
                 return createClientAccount(request);
             }
         }
+    }
 
+    public Optional<UserDto> updateUser(CreateUserRequest request, long id, UserRole oldRole) {
+        if(userRepository.findById(id).isEmpty() || oldRole == null) {
+            return Optional.empty();
+        }
+        if(request.getUserRole() == null) request.setUserRole(oldRole);
+        switch (oldRole) {
+            case ADMIN -> {
+                return updateAdminAccount(request, id);
+            }
+            case BUSINESS_OWNER -> {
+                return updateBusinessOwnerAccount(request, id);
+            }
+            case WORKER -> {
+                return updateWorkerAccount(request, id);
+            }
+            default -> {
+                return updateClientAccount(request, id);
+            }
+        }
     }
 
     Optional<UserDto> createAdminAccount(CreateUserRequest request) {
@@ -61,6 +79,24 @@ public class AccountService {
                 .userRole(request.getUserRole())
                 .isActive(true)
                 .build();
+        userRepository.save(user);
+        return Optional.ofNullable(modelMapper.map(user, AdminUserDto.class));
+    }
+
+    Optional<UserDto> updateAdminAccount(CreateUserRequest request, long id) {
+        Optional<AdminUser> userOptional;
+        if((userOptional = userRepository.findById(id).map(u -> modelMapper.map(u, AdminUser.class))).isEmpty()) {
+            return Optional.empty();
+        }
+        AdminUser user = userOptional.get();
+
+        user.setEmail(request.getEmail());
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setPassword(hashPassword(request.getPassword()));
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setUserRole(request.getUserRole());
+
         userRepository.save(user);
         return Optional.ofNullable(modelMapper.map(user, AdminUserDto.class));
     }
@@ -80,8 +116,27 @@ public class AccountService {
         return Optional.ofNullable(modelMapper.map(user, BusinessOwnerUserDto.class));
     }
 
+    Optional<UserDto> updateBusinessOwnerAccount(CreateUserRequest request, long id) {
+        Optional<BusinessOwnerUser> userOptional;
+        if((userOptional = userRepository.findById(id).map(u -> modelMapper.map(u, BusinessOwnerUser.class))).isEmpty()) {
+            return Optional.empty();
+        }
+        BusinessOwnerUser user = userOptional.get();
+
+        user.setEmail(request.getEmail());
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setPassword(hashPassword(request.getPassword()));
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setUserRole(request.getUserRole());
+        user.setNip(request.getNip());
+
+        userRepository.save(user);
+        return Optional.ofNullable(modelMapper.map(user, BusinessOwnerUserDto.class));
+    }
+
     Optional<UserDto> createWorkerAccount(CreateUserRequest request) {
-        BusinessOwnerUser user = BusinessOwnerUser.builder()
+        WorkerUser user = WorkerUser.builder()
                 .email(request.getEmail())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -94,8 +149,26 @@ public class AccountService {
         return Optional.ofNullable(modelMapper.map(user, WorkerUserDto.class));
     }
 
+    Optional<UserDto> updateWorkerAccount(CreateUserRequest request, long id) {
+        Optional<WorkerUser> userOptional;
+        if((userOptional = userRepository.findById(id).map(u -> modelMapper.map(u, WorkerUser.class))).isEmpty()) {
+            return Optional.empty();
+        }
+        WorkerUser user = userOptional.get();
+
+        user.setEmail(request.getEmail());
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setPassword(hashPassword(request.getPassword()));
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setUserRole(request.getUserRole());
+
+        userRepository.save(user);
+        return Optional.ofNullable(modelMapper.map(user, WorkerUserDto.class));
+    }
+
     Optional<UserDto> createClientAccount(CreateUserRequest request) {
-        BusinessOwnerUser user = BusinessOwnerUser.builder()
+        ClientUser user = ClientUser.builder()
                 .email(request.getEmail())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -104,6 +177,25 @@ public class AccountService {
                 .userRole(request.getUserRole())
                 .isActive(true)
                 .build();
+        userRepository.save(user);
+        return Optional.ofNullable(modelMapper.map(user, ClientUserDto.class));
+    }
+
+    Optional<UserDto> updateClientAccount(CreateUserRequest request, long id) {
+        Optional<ClientUser> userOptional;
+        if((userOptional = userRepository.findById(id).map(u -> modelMapper.map(u, ClientUser.class))).isEmpty()) {
+            return Optional.empty();
+        }
+        ClientUser user = userOptional.get();
+//        User user = userRepository.findById(id).get();
+
+        user.setEmail(request.getEmail());
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setPassword(hashPassword(request.getPassword()));
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setUserRole(request.getUserRole());
+
         userRepository.save(user);
         return Optional.ofNullable(modelMapper.map(user, ClientUserDto.class));
     }

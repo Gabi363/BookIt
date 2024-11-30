@@ -1,6 +1,7 @@
 package bookit.backend.controller;
 
 import bookit.backend.model.dto.UserDto;
+import bookit.backend.model.enums.UserRole;
 import bookit.backend.model.request.CreateUserRequest;
 import bookit.backend.model.request.LoginRequest;
 import bookit.backend.model.request.RefreshTokenRequest;
@@ -30,15 +31,28 @@ public class AuthenticationController {
     private final JwtService jwtService;
     private final UserService userService;
 
-    @PostMapping("register")
+    @PostMapping("register/client")
     @ManagedOperation(description = "Create new user account")
-    public ResponseEntity<?> createUser(@Valid @RequestBody CreateUserRequest request) {
+    public ResponseEntity<?> createClientUser(@Valid @RequestBody CreateUserRequest request) {
+        request.setUserRole(UserRole.CLIENT);
         Optional<UserDto> user = accountService.createUser(request);
         if(user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("User with given e-mail already exists!");
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(new UserResponse(user.get()));
     }
+
+    @PostMapping("register/business")
+    @ManagedOperation(description = "Create new user account")
+    public ResponseEntity<?> createBusinessOwnerUser(@Valid @RequestBody CreateUserRequest request) {
+        request.setUserRole(UserRole.BUSINESS_OWNER);
+        Optional<UserDto> user = accountService.createUser(request);
+        if(user.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("User with given e-mail already exists!");
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(new UserResponse(user.get()));
+    }
+
     @PostMapping("login")
     @ManagedOperation(description = "Login to account")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {

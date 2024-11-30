@@ -39,6 +39,15 @@ public class UserService implements UserDetailsService {
                 .map(user -> modelMapper.map(user, UserDto.class));
     }
 
+    public Optional<UserDto> getUserById(long id) {
+        return userRepository.findById(id)
+                .map(user -> modelMapper.map(user, UserDto.class));
+    }
+
+    public Optional<UserRole> getUserRole(long id) {
+        return userRepository.findById(id).map(User::getUserRole);
+    }
+
     public Optional<AdminUserDto> getAdminUserById(long id) {
         return userRepository.findById(id)
                 .map(user -> modelMapper.map(user, AdminUserDto.class));
