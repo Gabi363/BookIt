@@ -10,6 +10,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -187,7 +188,6 @@ public class AccountService {
             return Optional.empty();
         }
         ClientUser user = userOptional.get();
-//        User user = userRepository.findById(id).get();
 
         user.setEmail(request.getEmail());
         user.setFirstName(request.getFirstName());
@@ -207,5 +207,11 @@ public class AccountService {
     public Optional<UserDto> login(LoginRequest request) {
         return userService.getUserByEmail(request.getEmail())
                 .filter(user -> bCryptPasswordEncoder.matches(request.getPassword(), user.getPassword()));
+    }
+
+    public boolean isUserNotAuthorized(Authentication auth, long requestedId) {
+        long currentId = modelMapper.map(auth.getPrincipal(), long.class);
+        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
+        return (requestedId != currentId && role != UserRole.ADMIN);
     }
 }

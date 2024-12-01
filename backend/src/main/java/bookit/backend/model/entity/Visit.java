@@ -22,7 +22,7 @@ public class Visit implements Serializable {
 
     @Id
     @Column(name = "id", nullable = false)
-    @SequenceGenerator(name = "business_id_seq")
+    @SequenceGenerator(name = "business_id_seq", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "business_id_seq")
     private Long id;
 

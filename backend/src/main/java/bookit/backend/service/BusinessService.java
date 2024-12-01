@@ -12,6 +12,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -42,7 +43,7 @@ public class BusinessService {
         if(owner.isEmpty()) return Optional.empty();
 
         return businessRepository.findById(owner.get().getBusinessId())
-                .map(user -> modelMapper.map(user, BusinessDto.class));
+                .map(business -> modelMapper.map(business, BusinessDto.class));
     }
 
     public Optional<BusinessDto> createBusiness(CreateBusinessRequest request, long ownerId) {
@@ -67,5 +68,24 @@ public class BusinessService {
         if(address.isEmpty()) return Optional.empty();
 
         return Optional.of(modelMapper.map(business, BusinessDto.class));
+    }
+
+    public HttpStatus updateBusinessInfo(CreateBusinessRequest request, long ownerId) {
+        Optional<Business> businessOptional;
+        if((businessOptional = this.getBusinessByOwnerId(ownerId)
+                                    .map(b -> modelMapper.map(b, Business.class)))
+                .isEmpty()) {
+            return HttpStatus.NOT_FOUND;
+        }
+        Business business = businessOptional.get();
+        business.setName(request.getName());
+        business.setType(request.getType());
+        business.setPhoneNumber(request.getPhoneNumber());
+        business.setEmail(request.getEmail());
+
+        businessRepository.save(business);
+        addressService.updateAddress(request.getAddressRequest(), business);
+
+        return HttpStatus.CREATED;
     }
 }

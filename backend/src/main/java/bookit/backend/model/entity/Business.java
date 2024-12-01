@@ -23,7 +23,7 @@ public class Business implements Serializable {
 
     @Id
     @Column(name = "id", nullable = false)
-    @SequenceGenerator(name = "business_id_seq")
+    @SequenceGenerator(name = "business_id_seq", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "business_id_seq")
     private Long id;
 
@@ -31,6 +31,7 @@ public class Business implements Serializable {
     private String name;
 
     @Column(name = "type", nullable = false)
+    @Enumerated(EnumType.STRING)
     private BusinessType type;
 
     @Column(name = "contact_phone")

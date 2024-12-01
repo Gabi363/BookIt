@@ -1,10 +1,10 @@
 package bookit.backend.controller;
 
 import bookit.backend.model.dto.BusinessDto;
-import bookit.backend.model.enums.UserRole;
 import bookit.backend.model.request.CreateBusinessRequest;
 import bookit.backend.model.response.BusinessListResponse;
 import bookit.backend.model.response.BusinessResponse;
+import bookit.backend.service.AccountService;
 import bookit.backend.service.BusinessService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +13,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jmx.export.annotation.ManagedOperation;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +25,7 @@ import java.util.Optional;
 public class BusinessController {
 
     private final BusinessService businessService;
+    private final AccountService accountService;
     private final ModelMapper modelMapper;
 
     @GetMapping
@@ -37,17 +37,13 @@ public class BusinessController {
     @GetMapping("/{ownerId}")
     @ManagedOperation(description = "Get businesses of a user")
     public ResponseEntity<?> getBusiness(@PathVariable long ownerId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long currentId = modelMapper.map(auth.getPrincipal(), long.class);
-        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
-
-        if(ownerId != currentId && role != UserRole.ADMIN) {
+        if(accountService.isUserNotAuthorized(SecurityContextHolder.getContext().getAuthentication(), ownerId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         Optional<BusinessDto> business = businessService.getBusinessByOwnerId(ownerId);
         if(business.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Account does not exist!");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Business does not exist!");
         }
 
         return ResponseEntity.ok().body(new BusinessResponse(business.get()));
@@ -57,9 +53,7 @@ public class BusinessController {
     @ManagedOperation(description = "Add business")
     public ResponseEntity<?> createBusiness(@Valid @RequestBody CreateBusinessRequest request,
                                             @PathVariable long ownerId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long currentId = modelMapper.map(auth.getPrincipal(), long.class);
-        if(ownerId != currentId) {
+        if(accountService.isUserNotAuthorized(SecurityContextHolder.getContext().getAuthentication(), ownerId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -69,9 +63,25 @@ public class BusinessController {
 
         Optional<BusinessDto> business = businessService.createBusiness(request, ownerId);
         if(business.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Account does not exist!");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Business does not exist!");
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(new BusinessResponse(business.get()));
+    }
+
+    @PostMapping("/update/{ownerId}")
+    @ManagedOperation(description = "Update business")
+    public ResponseEntity<?> updateBusinessInfo(@Valid @RequestBody CreateBusinessRequest request,
+                                                @PathVariable long ownerId) {
+        if(accountService.isUserNotAuthorized(SecurityContextHolder.getContext().getAuthentication(), ownerId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        if(businessService.getBusinessByOwnerId(ownerId).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Business does not exist!");
+        }
+
+        HttpStatus status = businessService.updateBusinessInfo(request, ownerId);
+        return ResponseEntity.status(status).build();
     }
 }

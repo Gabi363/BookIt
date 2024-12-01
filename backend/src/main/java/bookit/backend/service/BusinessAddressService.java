@@ -34,4 +34,15 @@ public class BusinessAddressService {
         addressRepository.save(address);
         return Optional.of(modelMapper.map(address, BusinessAddressDto.class));
     }
+
+    public void updateAddress(CreateAddressRequest request, Business business) {
+        BusinessAddress address = addressRepository.findById(business.getId()).orElse(null);
+        if(address == null) return;
+
+        address.setCity(request.getCity());
+        address.setStreet(request.getStreet());
+        address.setLocalNumber(request.getLocalNumber());
+        address.setPostCode(request.getPostCode());
+        addressRepository.save(address);
+    }
 }
