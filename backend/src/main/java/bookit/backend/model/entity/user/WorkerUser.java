@@ -1,5 +1,6 @@
 package bookit.backend.model.entity.user;
 
+import bookit.backend.model.entity.Business;
 import bookit.backend.model.entity.Calendar;
 import bookit.backend.model.entity.rating.WorkerRating;
 import jakarta.persistence.*;
@@ -15,6 +16,10 @@ import java.util.List;
 @NoArgsConstructor
 @SuperBuilder
 public class WorkerUser extends User {
+
+    @ManyToOne
+    @JoinColumn(name = "business_id", nullable = false)
+    private Business business;
 
     @OneToMany(mappedBy = "worker")
     private List<WorkerRating> workerRatings;

@@ -1,6 +1,6 @@
 package bookit.backend.config.security;
 
-import bookit.backend.model.dto.UserDto;
+import bookit.backend.model.dto.user.UserDto;
 import bookit.backend.service.JwtService;
 import bookit.backend.service.UserService;
 import jakarta.servlet.FilterChain;

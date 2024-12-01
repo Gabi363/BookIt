@@ -1,6 +1,6 @@
 package bookit.backend.controller;
 
-import bookit.backend.model.dto.UserDto;
+import bookit.backend.model.dto.user.UserDto;
 import bookit.backend.model.enums.UserRole;
 import bookit.backend.model.request.CreateUserRequest;
 import bookit.backend.model.response.user.BusinessOwnerUserResponse;

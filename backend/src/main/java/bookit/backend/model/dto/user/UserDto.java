@@ -1,4 +1,4 @@
-package bookit.backend.model.dto;
+package bookit.backend.model.dto.user;
 
 import bookit.backend.model.enums.UserRole;
 import lombok.AllArgsConstructor;

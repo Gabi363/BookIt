@@ -2,8 +2,8 @@ package bookit.backend.model.entity;
 
 import bookit.backend.model.entity.points.BusinessPoints;
 import bookit.backend.model.entity.rating.BusinessRating;
-import bookit.backend.model.entity.user.BusinessOwnerUser;
-import bookit.backend.model.enums.ServiceType;
+import bookit.backend.model.entity.user.WorkerUser;
+import bookit.backend.model.enums.BusinessType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,18 +30,20 @@ public class Business implements Serializable {
     @Column(name = "name")
     private String name;
 
-    @ManyToOne
-    @JoinColumn(name = "owner_id", nullable = false)
-    private BusinessOwnerUser owner;
-
     @Column(name = "type", nullable = false)
-    private ServiceType type;
+    private BusinessType type;
 
     @Column(name = "contact_phone")
     private String phoneNumber;
 
     @Column(name = "contact_email")
     private String email;
+
+    @OneToMany(mappedBy = "business")
+    private List<Service> services;
+
+    @OneToMany(mappedBy = "business")
+    private List<WorkerUser> workers;
 
     @OneToMany(mappedBy = "business")
     private List<BusinessRating> ratings;

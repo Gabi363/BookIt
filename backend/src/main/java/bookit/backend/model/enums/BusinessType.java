@@ -1,6 +1,6 @@
 package bookit.backend.model.enums;
 
-public enum ServiceType {
+public enum BusinessType {
     HAIRSTYLE,
     MAKEUP,
     COSMETIC,

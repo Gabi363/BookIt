@@ -1,7 +1,7 @@
 package bookit.backend.service;
 
 import bookit.backend.config.security.JwtProperties;
-import bookit.backend.model.dto.UserDto;
+import bookit.backend.model.dto.user.UserDto;
 import bookit.backend.model.entity.user.User;
 import bookit.backend.repository.UserRepository;
 import io.jsonwebtoken.Claims;

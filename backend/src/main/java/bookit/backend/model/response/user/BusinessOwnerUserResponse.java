@@ -1,6 +1,6 @@
 package bookit.backend.model.response.user;
 
-import bookit.backend.model.dto.BusinessOwnerUserDto;
+import bookit.backend.model.dto.user.BusinessOwnerUserDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

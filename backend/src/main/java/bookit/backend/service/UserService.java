@@ -1,6 +1,6 @@
 package bookit.backend.service;
 
-import bookit.backend.model.dto.*;
+import bookit.backend.model.dto.user.*;
 import bookit.backend.model.entity.user.User;
 import bookit.backend.model.enums.UserRole;
 import bookit.backend.repository.UserRepository;
