@@ -18,7 +18,7 @@ import java.util.List;
 public class WorkerUser extends User {
 
     @ManyToOne
-    @JoinColumn(name = "business_id", nullable = false)
+    @JoinColumn(name = "business_id")
     private Business business;
 
     @OneToMany(mappedBy = "worker")

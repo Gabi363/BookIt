@@ -29,6 +29,7 @@ public class BusinessService {
     private final UserRepository userRepository;
     private final BusinessAddressService addressService;
     private final UserService userService;
+    private final AccountService accountService;
     private final ModelMapper modelMapper;
 
     public List<BusinessDto> getBusinesses() {
@@ -88,4 +89,47 @@ public class BusinessService {
 
         return HttpStatus.CREATED;
     }
+
+//    public HttpStatus addWorkerToBusiness(long businessId, CreateUserRequest request) {
+//        Optional<Business> businessOptional;
+//        if((businessOptional = businessRepository.findById(businessId)).isEmpty()){
+//            return HttpStatus.NOT_FOUND;
+//        }
+//        Business business = businessOptional.get();
+////        var workerOptional = userRepository.findByEmail(request.getEmail());
+////        if(workerOptional.isEmpty()) return HttpStatus.NOT_FOUND;
+//
+////        User user = modelMapper.map(workerOptional.get(), User.class);
+////        if(user.getUserRole() != UserRole.WORKER) {
+////            log.info(user.getUserRole());
+////            return HttpStatus.FORBIDDEN;
+////        }
+//
+//        Optional<UserDto> worker = accountService.createWorkerAccount(request, business);
+////        WorkerUser worker = WorkerUser.builder()
+////                .email(request.getEmail())
+////                .firstName(request.getFirstName())
+////                .lastName(request.getLastName())
+////                .password(request.getPassword())
+////                .phoneNumber(request.getPhoneNumber())
+////                .userRole(UserRole.WORKER)
+////                .isActive(true)
+////                .business(business)
+////                .build();
+////        log.info("start deleting");
+////        userService.deleteUser(user.getId());
+////        log.info("deleted");
+////        log.info("start saving");
+////        worker.setBusiness(business);
+////        userRepository.save(worker);
+////        log.info("saved worker");
+//
+////        var workersList = business.getWorkers();
+////        workersList.add(worker);
+////        business.setWorkers(workersList);
+////        businessRepository.save(business);
+////        log.info("saved business");
+//
+//        return HttpStatus.OK;
+//    }
 }

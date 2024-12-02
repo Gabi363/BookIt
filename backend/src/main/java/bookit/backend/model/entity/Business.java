@@ -43,7 +43,7 @@ public class Business implements Serializable {
     @OneToMany(mappedBy = "business")
     private List<Service> services;
 
-    @OneToMany(mappedBy = "business")
+    @OneToMany(mappedBy = "business", cascade = CascadeType.ALL)
     private List<WorkerUser> workers;
 
     @OneToMany(mappedBy = "business")

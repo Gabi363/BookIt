@@ -1,10 +1,15 @@
 package bookit.backend.service;
 
 import bookit.backend.model.dto.user.*;
-import bookit.backend.model.entity.user.*;
+import bookit.backend.model.entity.Business;
+import bookit.backend.model.entity.user.AdminUser;
+import bookit.backend.model.entity.user.BusinessOwnerUser;
+import bookit.backend.model.entity.user.ClientUser;
+import bookit.backend.model.entity.user.WorkerUser;
 import bookit.backend.model.enums.UserRole;
 import bookit.backend.model.request.CreateUserRequest;
 import bookit.backend.model.request.LoginRequest;
+import bookit.backend.repository.BusinessRepository;
 import bookit.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +31,7 @@ public class AccountService {
     private final ModelMapper modelMapper;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final UserService userService;
+    private final BusinessRepository businessRepository;
 
 
     public Optional<UserDto> createUser(CreateUserRequest request) {
@@ -40,11 +46,11 @@ public class AccountService {
             case BUSINESS_OWNER -> {
                 return createBusinessOwnerAccount(request);
             }
-            case WORKER -> {
-                return createWorkerAccount(request);
+            case CLIENT -> {
+                return createClientAccount(request);
             }
             default -> {
-                return createClientAccount(request);
+                return Optional.empty();
             }
         }
     }
@@ -136,15 +142,22 @@ public class AccountService {
         return Optional.ofNullable(modelMapper.map(user, BusinessOwnerUserDto.class));
     }
 
-    Optional<UserDto> createWorkerAccount(CreateUserRequest request) {
+    public Optional<UserDto> createWorkerAccount(CreateUserRequest request, long businessId) {
+        Optional<Business> businessOptional;
+        if((businessOptional = businessRepository.findById(businessId)).isEmpty()){
+            return Optional.empty();
+        }
+        Business business = businessOptional.get();
+
         WorkerUser user = WorkerUser.builder()
                 .email(request.getEmail())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .password(hashPassword(request.getPassword()))
                 .phoneNumber(request.getPhoneNumber())
-                .userRole(request.getUserRole())
+                .userRole(UserRole.WORKER)
                 .isActive(true)
+                .business(business)
                 .build();
         userRepository.save(user);
         return Optional.ofNullable(modelMapper.map(user, WorkerUserDto.class));
@@ -214,4 +227,14 @@ public class AccountService {
         UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
         return (requestedId != currentId && role != UserRole.ADMIN);
     }
+
+    public void deleteUser(long userId) {
+        userRepository.deleteById(userId);
+    }
+
+//    public HttpStatus deleteWorkerUserByEmail(String email) { @TODO
+//        var userDto = userService.getUserByEmail(email);
+//        if(userDto.isEmpty()) return HttpStatus.NOT_FOUND;
+//        if(userDto.get().getUserRole() != UserRole.WORKER) return HttpStatus.FORBIDDEN;
+//    }
 }
