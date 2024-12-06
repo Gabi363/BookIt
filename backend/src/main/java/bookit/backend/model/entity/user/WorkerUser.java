@@ -21,7 +21,7 @@ public class WorkerUser extends User {
     @JoinColumn(name = "business_id")
     private Business business;
 
-    @OneToMany(mappedBy = "worker")
+    @OneToMany(mappedBy = "worker", cascade = CascadeType.ALL)
     private List<WorkerRating> workerRatings;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)

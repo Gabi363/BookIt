@@ -5,14 +5,17 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.stereotype.Service;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "business_ratings")
 @Data
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class BusinessRating extends Rating {
 
     @ManyToOne

@@ -41,6 +41,14 @@ public class BusinessService {
                 .collect(Collectors.toList());
     }
 
+    public boolean businessExists(Long id) {
+        return businessRepository.existsById(id);
+    }
+
+    public Optional<BusinessDto> getBusiness(Long id) {
+        return Optional.ofNullable(modelMapper.map(businessRepository.findById(id), BusinessDto.class));
+    }
+
     public Optional<BusinessDto> getBusinessByOwnerId(long ownerId) {
         Optional<BusinessOwnerUserDto> owner = userService.getBusinessOwnerUserById(ownerId);
         return owner.flatMap(businessOwnerUserDto -> businessRepository.findById(businessOwnerUserDto.getBusinessId())
