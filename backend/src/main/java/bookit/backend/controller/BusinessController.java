@@ -3,6 +3,7 @@ package bookit.backend.controller;
 import bookit.backend.model.dto.BusinessDto;
 import bookit.backend.model.enums.UserRole;
 import bookit.backend.model.request.CreateBusinessRequest;
+import bookit.backend.model.request.CreateServiceRequest;
 import bookit.backend.model.request.CreateUserRequest;
 import bookit.backend.model.request.DeleteUserRequest;
 import bookit.backend.model.response.BusinessListResponse;
@@ -129,6 +130,70 @@ public class BusinessController {
             }
         }
         HttpStatus status = accountService.deleteWorkerUserByOwner(request.getEmail());
+        return ResponseEntity.status(status).build();
+    }
+
+    @PostMapping("/{businessId}/service")
+    @ManagedOperation(description = "Add service to business")
+    public ResponseEntity<?> addService(@Valid @RequestBody CreateServiceRequest request,
+                                        @PathVariable long businessId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
+        var b = businessService.getBusinessByOwnerId(ownerId);
+
+        if(b.isEmpty() || b.get().getId() != businessId) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
+
+        if(role != UserRole.ADMIN && businessId != b.get().getId()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        HttpStatus status = businessService.addService(businessId, request);
+        return ResponseEntity.status(status).build();
+    }
+
+    @PostMapping("/{businessId}/service/{serviceId}")
+    @ManagedOperation(description = "Update service")
+    public ResponseEntity<?> updateService(@Valid @RequestBody CreateServiceRequest request,
+                                           @PathVariable long businessId,
+                                           @PathVariable long serviceId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
+        var b = businessService.getBusinessByOwnerId(ownerId);
+
+        if(b.isEmpty() || b.get().getId() != businessId) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
+
+        if(role != UserRole.ADMIN && businessId != b.get().getId()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        HttpStatus status = businessService.updateService(businessId, request, serviceId);
+        return ResponseEntity.status(status).build();
+    }
+
+    @DeleteMapping("/{businessId}/service/{serviceId}")
+    @ManagedOperation(description = "Delete service")
+    public ResponseEntity<?> deleteService(@PathVariable long businessId,
+                                           @PathVariable long serviceId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
+        var b = businessService.getBusinessByOwnerId(ownerId);
+
+        if(b.isEmpty() || b.get().getId() != businessId) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
+
+        if(role != UserRole.ADMIN && businessId != b.get().getId()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        HttpStatus status = businessService.deleteService(serviceId, businessId);
         return ResponseEntity.status(status).build();
     }
 }

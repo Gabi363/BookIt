@@ -1,7 +1,6 @@
 package bookit.backend.model.dto;
 
 import bookit.backend.model.dto.user.WorkerUserDto;
-import bookit.backend.model.entity.Service;
 import bookit.backend.model.entity.points.BusinessPoints;
 import bookit.backend.model.entity.rating.BusinessRating;
 import bookit.backend.model.enums.BusinessType;
@@ -24,7 +23,7 @@ public class BusinessDto implements Serializable {
     private BusinessType type;
     private String phoneNumber;
     private String email;
-    private List<Service> services;
+    private List<ServiceDto> services;
     private List<WorkerUserDto> workers;
     private List<BusinessRating> ratings;
     private BusinessAddressDto address;

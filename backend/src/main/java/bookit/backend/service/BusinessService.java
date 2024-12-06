@@ -6,7 +6,9 @@ import bookit.backend.model.entity.Business;
 import bookit.backend.model.entity.user.BusinessOwnerUser;
 import bookit.backend.model.enums.BusinessType;
 import bookit.backend.model.request.CreateBusinessRequest;
+import bookit.backend.model.request.CreateServiceRequest;
 import bookit.backend.repository.BusinessRepository;
+import bookit.backend.repository.ServiceRepository;
 import bookit.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +31,7 @@ public class BusinessService {
     private final UserRepository userRepository;
     private final BusinessAddressService addressService;
     private final UserService userService;
-    private final AccountService accountService;
+    private final ServiceRepository serviceRepository;
     private final ModelMapper modelMapper;
 
     public List<BusinessDto> getBusinesses() {
@@ -41,10 +43,9 @@ public class BusinessService {
 
     public Optional<BusinessDto> getBusinessByOwnerId(long ownerId) {
         Optional<BusinessOwnerUserDto> owner = userService.getBusinessOwnerUserById(ownerId);
-        if(owner.isEmpty()) return Optional.empty();
+        return owner.flatMap(businessOwnerUserDto -> businessRepository.findById(businessOwnerUserDto.getBusinessId())
+                .map(business -> modelMapper.map(business, BusinessDto.class)));
 
-        return businessRepository.findById(owner.get().getBusinessId())
-                .map(business -> modelMapper.map(business, BusinessDto.class));
     }
 
     public Optional<BusinessDto> createBusiness(CreateBusinessRequest request, long ownerId) {
@@ -74,7 +75,7 @@ public class BusinessService {
     public HttpStatus updateBusinessInfo(CreateBusinessRequest request, long ownerId) {
         Optional<Business> businessOptional;
         if((businessOptional = this.getBusinessByOwnerId(ownerId)
-                                    .map(b -> modelMapper.map(b, Business.class)))
+                .map(b -> modelMapper.map(b, Business.class)))
                 .isEmpty()) {
             return HttpStatus.NOT_FOUND;
         }
@@ -90,46 +91,49 @@ public class BusinessService {
         return HttpStatus.CREATED;
     }
 
-//    public HttpStatus addWorkerToBusiness(long businessId, CreateUserRequest request) {
-//        Optional<Business> businessOptional;
-//        if((businessOptional = businessRepository.findById(businessId)).isEmpty()){
-//            return HttpStatus.NOT_FOUND;
-//        }
-//        Business business = businessOptional.get();
-////        var workerOptional = userRepository.findByEmail(request.getEmail());
-////        if(workerOptional.isEmpty()) return HttpStatus.NOT_FOUND;
-//
-////        User user = modelMapper.map(workerOptional.get(), User.class);
-////        if(user.getUserRole() != UserRole.WORKER) {
-////            log.info(user.getUserRole());
-////            return HttpStatus.FORBIDDEN;
-////        }
-//
-//        Optional<UserDto> worker = accountService.createWorkerAccount(request, business);
-////        WorkerUser worker = WorkerUser.builder()
-////                .email(request.getEmail())
-////                .firstName(request.getFirstName())
-////                .lastName(request.getLastName())
-////                .password(request.getPassword())
-////                .phoneNumber(request.getPhoneNumber())
-////                .userRole(UserRole.WORKER)
-////                .isActive(true)
-////                .business(business)
-////                .build();
-////        log.info("start deleting");
-////        userService.deleteUser(user.getId());
-////        log.info("deleted");
-////        log.info("start saving");
-////        worker.setBusiness(business);
-////        userRepository.save(worker);
-////        log.info("saved worker");
-//
-////        var workersList = business.getWorkers();
-////        workersList.add(worker);
-////        business.setWorkers(workersList);
-////        businessRepository.save(business);
-////        log.info("saved business");
-//
-//        return HttpStatus.OK;
-//    }
+    public HttpStatus addService(long businessId, CreateServiceRequest request) {
+        Optional<Business> businessOptional;
+        if((businessOptional = businessRepository.findById(businessId)).isEmpty()){
+            return HttpStatus.NOT_FOUND;
+        }
+        Business business = businessOptional.get();
+
+        bookit.backend.model.entity.Service service = bookit.backend.model.entity.Service.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .price(request.getPrice())
+                .category(request.getCategory())
+                .business(business)
+                .build();
+
+        serviceRepository.save(service);
+        return HttpStatus.CREATED;
+    }
+
+    public HttpStatus updateService(long businessId, CreateServiceRequest request, long serviceId) {
+        Optional<bookit.backend.model.entity.Service> serviceOptional = serviceRepository.findById(serviceId);
+        if(serviceOptional.isEmpty()) return HttpStatus.NOT_FOUND;
+
+        bookit.backend.model.entity.Service service = serviceOptional.get();
+        if(service.getBusiness().getId() != businessId) return HttpStatus.FORBIDDEN;
+
+        service.setName(request.getName());
+        service.setDescription(request.getDescription());
+        service.setPrice(request.getPrice());
+        service.setCategory(request.getCategory());
+
+        serviceRepository.save(service);
+        return HttpStatus.OK;
+    }
+
+    public HttpStatus deleteService(long businessId, long serviceId) {
+        Optional<bookit.backend.model.entity.Service> serviceOptional = serviceRepository.findById(serviceId);
+        if(serviceOptional.isEmpty()) return HttpStatus.NOT_FOUND;
+        bookit.backend.model.entity.Service service = serviceOptional.get();
+        if(service.getBusiness().getId() != businessId) return HttpStatus.FORBIDDEN;
+
+        serviceRepository.delete(service);
+        return HttpStatus.OK;
+    }
+
 }

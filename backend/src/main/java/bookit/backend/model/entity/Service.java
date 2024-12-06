@@ -32,6 +32,9 @@ public class Service implements Serializable {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "category")
+    private String category;
+
     @Column(name = "price")
     private Double price;
 }
