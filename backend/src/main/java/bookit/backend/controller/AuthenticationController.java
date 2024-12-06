@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jmx.export.annotation.ManagedOperation;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +31,18 @@ public class AuthenticationController {
     private final AccountService accountService;
     private final JwtService jwtService;
     private final UserService userService;
+
+    @PostMapping("register/admin")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    @ManagedOperation(description = "Create new admin account")
+    public ResponseEntity<?> createAdminUser(@Valid @RequestBody CreateUserRequest request) {
+        request.setUserRole(UserRole.ADMIN);
+        Optional<UserDto> user = accountService.createUser(request);
+        if(user.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("User with given e-mail already exists!");
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(new UserResponse(user.get()));
+    }
 
     @PostMapping("register/client")
     @ManagedOperation(description = "Create new user account")
