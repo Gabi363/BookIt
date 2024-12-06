@@ -46,7 +46,7 @@ public class BusinessService {
     }
 
     public Optional<BusinessDto> getBusiness(Long id) {
-        return Optional.ofNullable(modelMapper.map(businessRepository.findById(id), BusinessDto.class));
+        return businessRepository.findById(id).map(entity -> modelMapper.map(entity, BusinessDto.class));
     }
 
     public Optional<BusinessDto> getBusinessByOwnerId(long ownerId) {

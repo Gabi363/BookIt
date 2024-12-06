@@ -10,7 +10,6 @@ import bookit.backend.model.response.BusinessListResponse;
 import bookit.backend.model.response.BusinessResponse;
 import bookit.backend.service.AccountService;
 import bookit.backend.service.BusinessService;
-import bookit.backend.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -32,7 +31,6 @@ public class BusinessController {
 
     private final BusinessService businessService;
     private final AccountService accountService;
-    private final UserService userService;
     private final ModelMapper modelMapper;
 
     @GetMapping
@@ -41,9 +39,20 @@ public class BusinessController {
         return new BusinessListResponse(businessService.getBusinesses());
     }
 
-    @GetMapping("/{ownerId}")
-    @ManagedOperation(description = "Get businesses of a user")
-    public ResponseEntity<?> getBusiness(@PathVariable long ownerId) {
+    @GetMapping("/{businessId}")
+    @ManagedOperation(description = "Get business details")
+    public ResponseEntity<?> getBusiness(@PathVariable long businessId) {
+        Optional<BusinessDto> business = businessService.getBusiness(businessId);
+        if(business.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Business does not exist!");
+        }
+
+        return ResponseEntity.ok().body(new BusinessResponse(business.get()));
+    }
+
+    @GetMapping("/owner/{ownerId}")
+    @ManagedOperation(description = "Get business of a user")
+    public ResponseEntity<?> getBusinessOfOwner(@PathVariable long ownerId) {
         if(accountService.isUserNotAuthorized(SecurityContextHolder.getContext().getAuthentication(), ownerId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
