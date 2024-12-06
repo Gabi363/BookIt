@@ -42,7 +42,7 @@ public class RatingController {
     @PostMapping("/worker/{workerId}")
     @ManagedOperation(description = "Add worker rating")
     public ResponseEntity<?> addWorkerRating(@Valid @RequestBody CreateRatingRequest request,
-                                               @PathVariable long workerId) {
+                                             @PathVariable long workerId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         long clientId = modelMapper.map(auth.getPrincipal(), long.class);
         UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);

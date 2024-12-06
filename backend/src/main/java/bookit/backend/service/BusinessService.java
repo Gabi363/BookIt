@@ -45,7 +45,7 @@ public class BusinessService {
         return businessRepository.existsById(id);
     }
 
-    public Optional<BusinessDto> getBusiness(Long id) {
+    public Optional<BusinessDto> getBusiness(long id) {
         return businessRepository.findById(id).map(entity -> modelMapper.map(entity, BusinessDto.class));
     }
 
