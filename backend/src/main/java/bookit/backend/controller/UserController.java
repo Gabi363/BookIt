@@ -3,6 +3,7 @@ package bookit.backend.controller;
 import bookit.backend.model.dto.user.UserDto;
 import bookit.backend.model.enums.UserRole;
 import bookit.backend.model.request.CreateUserRequest;
+import bookit.backend.model.request.DeleteUserRequest;
 import bookit.backend.model.response.user.BusinessOwnerUserResponse;
 import bookit.backend.model.response.user.UserListResponse;
 import bookit.backend.model.response.user.UserResponse;
@@ -91,4 +92,20 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+
+    @DeleteMapping("/delete/{userId}")
+    @ManagedOperation(description = "Delete user")
+    public ResponseEntity<?> deleteUser(@Valid @RequestBody DeleteUserRequest request,
+                                        @PathVariable long userId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        long currentId = modelMapper.map(auth.getPrincipal(), long.class);
+        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
+
+        if(role != UserRole.ADMIN && userId != currentId) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        HttpStatus status = accountService.deleteUserByEmail(request.getEmail());
+        return ResponseEntity.status(status).build();
+    }
 }

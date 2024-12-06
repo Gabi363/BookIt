@@ -27,7 +27,7 @@ public class Business implements Serializable {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "business_id_seq")
     private Long id;
 
-    @Column(name = "name")
+    @Column(name = "name", unique = true)
     private String name;
 
     @Column(name = "type", nullable = false)

@@ -226,7 +226,7 @@ public class AccountService {
         return (requestedId != currentId && role != UserRole.ADMIN);
     }
 
-    public HttpStatus deleteWorkerUserByEmail(String email) {
+    public HttpStatus deleteWorkerUserByOwner(String email) {
         var userDto = userService.getUserByEmail(email);
         if(userDto.isEmpty()) return HttpStatus.NOT_FOUND;
         if(userDto.get().getUserRole() != UserRole.WORKER) return HttpStatus.FORBIDDEN;
@@ -234,6 +234,32 @@ public class AccountService {
         WorkerUser worker = modelMapper.map(userDto.get(), WorkerUser.class);
         User user = modelMapper.map(userDto.get(), User.class);
         userRepository.delete(worker);
+        userRepository.delete(user);
+        return HttpStatus.OK;
+    }
+
+    public HttpStatus deleteUserByEmail(String email) {
+        var userDto = userService.getUserByEmail(email);
+        if(userDto.isEmpty()) return HttpStatus.NOT_FOUND;
+
+        UserRole role = userDto.get().getUserRole();
+        if(role == UserRole.ADMIN) {
+            AdminUser admin = modelMapper.map(userDto.get(), AdminUser.class);
+            userRepository.delete(admin);
+        }
+        if(role == UserRole.BUSINESS_OWNER) {
+            BusinessOwnerUser owner = modelMapper.map(userDto.get(), BusinessOwnerUser.class);
+            userRepository.delete(owner);
+        }
+        if(role == UserRole.WORKER) {
+            WorkerUser worker = modelMapper.map(userDto.get(), WorkerUser.class);
+            userRepository.delete(worker);
+        }
+        if(role == UserRole.CLIENT) {
+            ClientUser client = modelMapper.map(userDto.get(), ClientUser.class);
+            userRepository.delete(client);
+        }
+        User user = modelMapper.map(userDto.get(), User.class);
         userRepository.delete(user);
         return HttpStatus.OK;
     }

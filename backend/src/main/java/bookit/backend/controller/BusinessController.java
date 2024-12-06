@@ -128,8 +128,7 @@ public class BusinessController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
         }
-//        @TODO
-        HttpStatus status = accountService.deleteWorkerUserByEmail(request.getEmail());
+        HttpStatus status = accountService.deleteWorkerUserByOwner(request.getEmail());
         return ResponseEntity.status(status).build();
     }
 }
