@@ -117,7 +117,7 @@ public class BusinessController {
     @DeleteMapping("/{businessId}/worker")
     @ManagedOperation(description = "Delete worker")
     public ResponseEntity<?> addWorker(@PathVariable long businessId,
-                                        @Valid @RequestBody DeleteUserRequest request) {
+                                       @Valid @RequestBody DeleteUserRequest request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
         var b = businessService.getBusinessByOwnerId(ownerId);
@@ -129,9 +129,7 @@ public class BusinessController {
             }
         }
 //        @TODO
-//        accountService.deleteUser();
-//        if(worker.isEmpty()) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-
-        return ResponseEntity.status(HttpStatus.OK).build();
+        HttpStatus status = accountService.deleteWorkerUserByEmail(request.getEmail());
+        return ResponseEntity.status(status).build();
     }
 }

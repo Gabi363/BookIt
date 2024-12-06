@@ -2,10 +2,7 @@ package bookit.backend.service;
 
 import bookit.backend.model.dto.user.*;
 import bookit.backend.model.entity.Business;
-import bookit.backend.model.entity.user.AdminUser;
-import bookit.backend.model.entity.user.BusinessOwnerUser;
-import bookit.backend.model.entity.user.ClientUser;
-import bookit.backend.model.entity.user.WorkerUser;
+import bookit.backend.model.entity.user.*;
 import bookit.backend.model.enums.UserRole;
 import bookit.backend.model.request.CreateUserRequest;
 import bookit.backend.model.request.LoginRequest;
@@ -15,6 +12,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -228,13 +226,15 @@ public class AccountService {
         return (requestedId != currentId && role != UserRole.ADMIN);
     }
 
-    public void deleteUser(long userId) {
-        userRepository.deleteById(userId);
-    }
+    public HttpStatus deleteWorkerUserByEmail(String email) {
+        var userDto = userService.getUserByEmail(email);
+        if(userDto.isEmpty()) return HttpStatus.NOT_FOUND;
+        if(userDto.get().getUserRole() != UserRole.WORKER) return HttpStatus.FORBIDDEN;
 
-//    public HttpStatus deleteWorkerUserByEmail(String email) { @TODO
-//        var userDto = userService.getUserByEmail(email);
-//        if(userDto.isEmpty()) return HttpStatus.NOT_FOUND;
-//        if(userDto.get().getUserRole() != UserRole.WORKER) return HttpStatus.FORBIDDEN;
-//    }
+        WorkerUser worker = modelMapper.map(userDto.get(), WorkerUser.class);
+        User user = modelMapper.map(userDto.get(), User.class);
+        userRepository.delete(worker);
+        userRepository.delete(user);
+        return HttpStatus.OK;
+    }
 }
