@@ -27,4 +27,5 @@ public class BusinessDto implements Serializable {
     private List<BusinessRatingDto> ratings;
     private BusinessAddressDto address;
     private List<BusinessPoints> points;
+    private Double averageRating;
 }

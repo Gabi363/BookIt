@@ -2,6 +2,7 @@ package bookit.backend.model.entity;
 
 import bookit.backend.model.entity.points.BusinessPoints;
 import bookit.backend.model.entity.rating.BusinessRating;
+import bookit.backend.model.entity.rating.Rating;
 import bookit.backend.model.entity.user.WorkerUser;
 import bookit.backend.model.enums.BusinessType;
 import jakarta.persistence.*;
@@ -55,4 +56,13 @@ public class Business implements Serializable {
 
     @OneToMany(mappedBy = "business")
     private List<BusinessPoints> points;
+
+    @Transient
+    private Double averageRating = getAverageRating();
+
+    public Double getAverageRating() {
+        return ratings != null
+                ? ratings.stream().mapToDouble(Rating::getGrade).average().orElse(0)
+                : 0d;
+    }
 }

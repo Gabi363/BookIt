@@ -65,11 +65,14 @@ public class BusinessController {
         return ResponseEntity.ok().body(new BusinessResponse(business.get()));
     }
 
-    @PostMapping("/{ownerId}")
+    @PostMapping
     @ManagedOperation(description = "Add business")
-    public ResponseEntity<?> createBusiness(@Valid @RequestBody CreateBusinessRequest request,
-                                            @PathVariable long ownerId) {
-        if(accountService.isUserNotAuthorized(SecurityContextHolder.getContext().getAuthentication(), ownerId)) {
+    public ResponseEntity<?> createBusiness(@Valid @RequestBody CreateBusinessRequest request) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
+        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
+
+        if(role != UserRole.BUSINESS_OWNER) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
