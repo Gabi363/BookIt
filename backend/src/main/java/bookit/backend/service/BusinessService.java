@@ -45,6 +45,10 @@ public class BusinessService {
         return optionalBusiness.map(business -> modelMapper.map(business, BusinessDto.class));
     }
 
+    public Optional<Long> getBusinessIdByOwnerId(long ownerId) {
+        return businessRepository.findFirstByOwner_Id(ownerId).map(Business::getId);
+    }
+
     public Optional<BusinessDto> createBusiness(CreateBusinessRequest request, long ownerId) {
         Optional<BusinessOwnerUser> ownerOptional;
         if((ownerOptional = userRepository.findById(ownerId).map(user -> modelMapper.map(user, BusinessOwnerUser.class))).isEmpty()) {

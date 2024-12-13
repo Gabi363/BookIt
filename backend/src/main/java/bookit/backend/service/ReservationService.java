@@ -6,7 +6,6 @@ import bookit.backend.model.entity.Reservation;
 import bookit.backend.model.entity.user.ClientUser;
 import bookit.backend.model.entity.user.WorkerUser;
 import bookit.backend.model.request.AddReservationRequest;
-import bookit.backend.repository.BusinessRepository;
 import bookit.backend.repository.ReservationRepository;
 import bookit.backend.repository.ServiceRepository;
 import bookit.backend.repository.UserRepository;
@@ -17,10 +16,10 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -33,6 +32,7 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
     private final ServiceRepository serviceRepository;
+    private final BusinessService businessService;
     private final ModelMapper modelMapper;
 
 
@@ -78,5 +78,40 @@ public class ReservationService {
 
         reservationRepository.save(reservation);
         return HttpStatus.CREATED;
+    }
+
+    public List<ReservationDto> getReservationsForBusinessOwner(long ownerId) {
+        return reservationRepository.findAllByBusiness_Owner_Id(ownerId)
+                .stream()
+                .map(r -> modelMapper.map(r, ReservationDto.class))
+                .toList();
+    }
+
+    public List<ReservationDto> getReservationsForWorker(long workerId) {
+        return reservationRepository.findAllByWorker_Id(workerId)
+                .stream()
+                .map(r -> modelMapper.map(r, ReservationDto.class))
+                .toList();
+    }
+
+    public List<ReservationDto> getReservationsForClient(long clientId) {
+        return reservationRepository.findAllByClient_Id(clientId)
+                .stream()
+                .map(r -> modelMapper.map(r, ReservationDto.class))
+                .toList();
+    }
+
+    public HttpStatus deleteReservation(long reservationId, LoggedUserInfo user) {
+        var reservation = reservationRepository.findById(reservationId);
+
+        if(reservation.isEmpty()) return HttpStatus.NOT_FOUND;
+        if(!user.isNotBusinessOwner()) {
+            var businessId = businessService.getBusinessIdByOwnerId(user.getId());
+            if(businessId.isEmpty() || !businessId.get().equals(reservation.get().getBusiness().getId())) return HttpStatus.FORBIDDEN;
+        }
+        else if(!Objects.equals(reservation.get().getClient().getId(), user.getId())) return HttpStatus.FORBIDDEN;
+
+        reservationRepository.delete(reservation.get());
+        return HttpStatus.OK;
     }
 }
