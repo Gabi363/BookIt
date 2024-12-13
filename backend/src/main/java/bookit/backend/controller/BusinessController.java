@@ -225,4 +225,20 @@ public class BusinessController {
         HttpStatus status = workingHoursService.addWorkingHours(businessId, ownerId, request);
         return ResponseEntity.status(status).build();
     }
+
+    @PutMapping("/working-hours/{businessId}")
+    @ManagedOperation(description = "Update working hours")
+    public ResponseEntity<?> updateWorkingHours(@Valid @RequestBody AddWorkingHoursRequest request,
+                                                @PathVariable Long businessId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
+        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
+
+        if(role != UserRole.BUSINESS_OWNER) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        HttpStatus status = workingHoursService.updateWorkingHours(businessId, ownerId, request);
+        return ResponseEntity.status(status).build();
+    }
 }
