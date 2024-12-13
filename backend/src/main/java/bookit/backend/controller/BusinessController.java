@@ -1,14 +1,10 @@
 package bookit.backend.controller;
 
 import bookit.backend.model.dto.BusinessDto;
-import bookit.backend.model.enums.UserRole;
 import bookit.backend.model.request.*;
 import bookit.backend.model.response.BusinessListResponse;
 import bookit.backend.model.response.BusinessResponse;
-import bookit.backend.service.AccountService;
-import bookit.backend.service.BusinessService;
-import bookit.backend.service.ServicesService;
-import bookit.backend.service.WorkingHoursService;
+import bookit.backend.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -16,8 +12,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jmx.export.annotation.ManagedOperation;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -54,7 +48,9 @@ public class BusinessController {
     @GetMapping("/owner/{ownerId}")
     @ManagedOperation(description = "Get business of a user")
     public ResponseEntity<?> getBusinessOfOwner(@PathVariable long ownerId) {
-        if(accountService.isUserNotAuthorized(SecurityContextHolder.getContext().getAuthentication(), ownerId)) {
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+
+        if(userInfo.isNotAdmin() && userInfo.getId() != ownerId) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -69,19 +65,14 @@ public class BusinessController {
     @PostMapping
     @ManagedOperation(description = "Add business")
     public ResponseEntity<?> createBusiness(@Valid @RequestBody CreateBusinessRequest request) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
-        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        if(userInfo.isNotBusinessOwner()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
-        if(role != UserRole.BUSINESS_OWNER) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        if(businessService.getBusinessByOwnerId(ownerId).isPresent()) {
+        if(businessService.getBusinessByOwnerId(userInfo.getId()).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
 
-        Optional<BusinessDto> business = businessService.createBusiness(request, ownerId);
+        Optional<BusinessDto> business = businessService.createBusiness(request, userInfo.getId());
         if(business.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Business does not exist!");
         }
@@ -93,7 +84,8 @@ public class BusinessController {
     @ManagedOperation(description = "Update business")
     public ResponseEntity<?> updateBusinessInfo(@Valid @RequestBody CreateBusinessRequest request,
                                                 @PathVariable long ownerId) {
-        if(accountService.isUserNotAuthorized(SecurityContextHolder.getContext().getAuthentication(), ownerId)) {
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        if(userInfo.isNotAdmin() && userInfo.getId() != ownerId) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -109,16 +101,12 @@ public class BusinessController {
     @ManagedOperation(description = "Add worker to business")
     public ResponseEntity<?> addWorker(@Valid @RequestBody CreateUserRequest request,
                                        @PathVariable long businessId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
-        var b = businessService.getBusinessByOwnerId(ownerId);
-
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        var b = businessService.getBusinessByOwnerId(userInfo.getId());
         if(b.isEmpty() || b.get().getId() != businessId) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
-
-        if(role != UserRole.ADMIN && businessId != b.get().getId()) {
+        if(userInfo.isNotAdmin() && businessId != b.get().getId()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -132,12 +120,9 @@ public class BusinessController {
     @ManagedOperation(description = "Delete worker")
     public ResponseEntity<?> deleteWorker(@PathVariable long businessId,
                                           @Valid @RequestBody DeleteUserRequest request) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
-        var b = businessService.getBusinessByOwnerId(ownerId);
-        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
-
-        if(role != UserRole.ADMIN) {
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        var b = businessService.getBusinessByOwnerId(userInfo.getId());
+        if(userInfo.isNotAdmin()) {
             if(b.isEmpty() || b.get().getId() != businessId) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
@@ -150,16 +135,14 @@ public class BusinessController {
     @ManagedOperation(description = "Add service to business")
     public ResponseEntity<?> addService(@Valid @RequestBody CreateServiceRequest request,
                                         @PathVariable long businessId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
-        var b = businessService.getBusinessByOwnerId(ownerId);
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        var b = businessService.getBusinessByOwnerId(userInfo.getId());
 
         if(b.isEmpty() || b.get().getId() != businessId) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
 
-        if(role != UserRole.ADMIN && businessId != b.get().getId()) {
+        if(userInfo.isNotAdmin() && businessId != b.get().getId()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -172,16 +155,12 @@ public class BusinessController {
     public ResponseEntity<?> updateService(@Valid @RequestBody CreateServiceRequest request,
                                            @PathVariable long businessId,
                                            @PathVariable long serviceId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
-        var b = businessService.getBusinessByOwnerId(ownerId);
-
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        var b = businessService.getBusinessByOwnerId(userInfo.getId());
         if(b.isEmpty() || b.get().getId() != businessId) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
-
-        if(role != UserRole.ADMIN && businessId != b.get().getId()) {
+        if(userInfo.isNotAdmin() && businessId != b.get().getId()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -193,16 +172,12 @@ public class BusinessController {
     @ManagedOperation(description = "Delete service")
     public ResponseEntity<?> deleteService(@PathVariable long businessId,
                                            @PathVariable long serviceId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
-        var b = businessService.getBusinessByOwnerId(ownerId);
-
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        var b = businessService.getBusinessByOwnerId(userInfo.getId());
         if(b.isEmpty() || b.get().getId() != businessId) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
-
-        if(role != UserRole.ADMIN && businessId != b.get().getId()) {
+        if(userInfo.isNotAdmin() && businessId != b.get().getId()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -214,15 +189,13 @@ public class BusinessController {
     @ManagedOperation(description = "Add working hours")
     public ResponseEntity<?> addWorkingHours(@Valid @RequestBody AddWorkingHoursRequest request,
                                              @PathVariable Long businessId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
-        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
 
-        if(role != UserRole.BUSINESS_OWNER) {
+        if(userInfo.isNotBusinessOwner()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        HttpStatus status = workingHoursService.addWorkingHours(businessId, ownerId, request);
+        HttpStatus status = workingHoursService.addWorkingHours(businessId, userInfo.getId(), request);
         return ResponseEntity.status(status).build();
     }
 
@@ -230,15 +203,12 @@ public class BusinessController {
     @ManagedOperation(description = "Update working hours")
     public ResponseEntity<?> updateWorkingHours(@Valid @RequestBody AddWorkingHoursRequest request,
                                                 @PathVariable Long businessId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
-        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
-
-        if(role != UserRole.BUSINESS_OWNER) {
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        if(userInfo.isNotBusinessOwner()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        HttpStatus status = workingHoursService.updateWorkingHours(businessId, ownerId, request);
+        HttpStatus status = workingHoursService.updateWorkingHours(businessId, userInfo.getId(), request);
         return ResponseEntity.status(status).build();
     }
 }

@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -220,10 +221,11 @@ public class AccountService {
                 .filter(user -> bCryptPasswordEncoder.matches(request.getPassword(), user.getPassword()));
     }
 
-    public boolean isUserNotAuthorized(Authentication auth, long requestedId) {
-        long currentId = modelMapper.map(auth.getPrincipal(), long.class);
+    public LoggedUserInfo getLoggedUserInfo() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        long userId = modelMapper.map(auth.getPrincipal(), long.class);
         UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
-        return (requestedId != currentId && role != UserRole.ADMIN);
+        return new LoggedUserInfo(userId, role);
     }
 
     public HttpStatus deleteWorkerUserByOwner(String email) {

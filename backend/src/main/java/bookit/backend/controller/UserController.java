@@ -1,13 +1,13 @@
 package bookit.backend.controller;
 
 import bookit.backend.model.dto.user.UserDto;
-import bookit.backend.model.enums.UserRole;
 import bookit.backend.model.request.CreateUserRequest;
 import bookit.backend.model.request.DeleteUserRequest;
 import bookit.backend.model.response.user.BusinessOwnerUserResponse;
 import bookit.backend.model.response.user.UserListResponse;
 import bookit.backend.model.response.user.UserResponse;
 import bookit.backend.service.AccountService;
+import bookit.backend.service.LoggedUserInfo;
 import bookit.backend.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -44,24 +42,22 @@ public class UserController {
     @GetMapping("/current")
     @ManagedOperation(description = "Get current user's information")
     public ResponseEntity<?> getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long userId = modelMapper.map(auth.getPrincipal(), long.class);
-        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
 
-        if(role == UserRole.ADMIN) {
-            var user = userService.getAdminUserById(userId);
+        if(!userInfo.isNotAdmin()) {
+            var user = userService.getAdminUserById(userInfo.getId());
             if(user.isPresent()) return ResponseEntity.ok().body(new UserResponse(user.get()));
         }
-        else if(role == UserRole.BUSINESS_OWNER) {
-            var user = userService.getBusinessOwnerUserById(userId);
+        else if(!userInfo.isNotBusinessOwner()) {
+            var user = userService.getBusinessOwnerUserById(userInfo.getId());
             if(user.isPresent()) return ResponseEntity.ok().body(new BusinessOwnerUserResponse(user.get()));
         }
-        else if(role == UserRole.WORKER) {
-            var user = userService.getWorkerUserById(userId);
+        else if(userInfo.isWorker()) {
+            var user = userService.getWorkerUserById(userInfo.getId());
             if(user.isPresent()) return ResponseEntity.ok().body(new UserResponse(user.get()));
         }
-        else if(role == UserRole.CLIENT) {
-            var user = userService.getClientUserById(userId);
+        else if(userInfo.isClient()) {
+            var user = userService.getClientUserById(userInfo.getId());
             if(user.isPresent()) return ResponseEntity.ok().body(new UserResponse(user.get()));
         }
 
@@ -72,17 +68,14 @@ public class UserController {
     @ManagedOperation(description = "Update user's information")
     public ResponseEntity<?> updateUser(@Valid @RequestBody CreateUserRequest request,
                                         @PathVariable long userId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long currentId = modelMapper.map(auth.getPrincipal(), long.class);
-        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
-
-        if(role != UserRole.ADMIN && userId != currentId) {
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        if(userInfo.isNotAdmin() && userId != userInfo.getId()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         var oldRole = userService.getUserRole(userId).orElse(null);
         if(oldRole == null) return ResponseEntity.status(HttpStatus.CONFLICT).body("Account does not exist!");
-        if(userId == currentId) request.setUserRole(null);
+        if(userId == userInfo.getId()) request.setUserRole(null);
 
         Optional<UserDto> updatedUser = accountService.updateUser(request, userId, oldRole);
 
@@ -97,11 +90,8 @@ public class UserController {
     @ManagedOperation(description = "Delete user")
     public ResponseEntity<?> deleteUser(@Valid @RequestBody DeleteUserRequest request,
                                         @PathVariable long userId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long currentId = modelMapper.map(auth.getPrincipal(), long.class);
-        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
-
-        if(role != UserRole.ADMIN && userId != currentId) {
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        if(userInfo.isNotAdmin() && userId != userInfo.getId()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 

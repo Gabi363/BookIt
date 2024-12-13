@@ -1,7 +1,8 @@
 package bookit.backend.controller;
 
-import bookit.backend.model.enums.UserRole;
 import bookit.backend.model.request.CreateRatingRequest;
+import bookit.backend.service.AccountService;
+import bookit.backend.service.LoggedUserInfo;
 import bookit.backend.service.RatingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -10,8 +11,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jmx.export.annotation.ManagedOperation;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,21 +20,19 @@ import org.springframework.web.bind.annotation.*;
 public class RatingController {
 
     private final RatingService ratingService;
+    private final AccountService accountService;
     private final ModelMapper modelMapper;
 
     @PostMapping("/business/{businessId}")
     @ManagedOperation(description = "Add business rating")
     public ResponseEntity<?> addBusinessRating(@Valid @RequestBody CreateRatingRequest request,
                                                @PathVariable long businessId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long clientId = modelMapper.map(auth.getPrincipal(), long.class);
-        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
-
-        if(role != UserRole.CLIENT) {
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        if(!userInfo.isClient()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        HttpStatus status = ratingService.addBusinessRating(businessId, clientId, request);
+        HttpStatus status = ratingService.addBusinessRating(businessId, userInfo.getId(), request);
         return ResponseEntity.status(status).build();
     }
 
@@ -43,15 +40,12 @@ public class RatingController {
     @ManagedOperation(description = "Add worker rating")
     public ResponseEntity<?> addWorkerRating(@Valid @RequestBody CreateRatingRequest request,
                                              @PathVariable long workerId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long clientId = modelMapper.map(auth.getPrincipal(), long.class);
-        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
-
-        if(role != UserRole.CLIENT) {
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        if(!userInfo.isClient()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        HttpStatus status = ratingService.addWorkerRating(workerId, clientId, request);
+        HttpStatus status = ratingService.addWorkerRating(workerId, userInfo.getId(), request);
         return ResponseEntity.status(status).build();
     }
 
@@ -59,20 +53,18 @@ public class RatingController {
     @ManagedOperation(description = "Update rating")
     public ResponseEntity<?> updateRating(@Valid @RequestBody CreateRatingRequest request,
                                           @PathVariable long ratingId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long clientId = modelMapper.map(auth.getPrincipal(), long.class);
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
 
-        HttpStatus status = ratingService.updateRating(ratingId, clientId, request);
+        HttpStatus status = ratingService.updateRating(ratingId, userInfo.getId(), request);
         return ResponseEntity.status(status).build();
     }
 
     @DeleteMapping("/{ratingId}")
     @ManagedOperation(description = "Delete rating")
     public ResponseEntity<?> deleteRating(@PathVariable long ratingId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long clientId = modelMapper.map(auth.getPrincipal(), long.class);
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
 
-        HttpStatus status = ratingService.deleteRating(ratingId, clientId);
+        HttpStatus status = ratingService.deleteRating(ratingId, userInfo.getId());
         return ResponseEntity.status(status).build();
     }
 }
