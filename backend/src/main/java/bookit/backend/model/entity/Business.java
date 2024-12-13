@@ -3,6 +3,7 @@ package bookit.backend.model.entity;
 import bookit.backend.model.entity.points.BusinessPoints;
 import bookit.backend.model.entity.rating.BusinessRating;
 import bookit.backend.model.entity.rating.Rating;
+import bookit.backend.model.entity.user.BusinessOwnerUser;
 import bookit.backend.model.entity.user.WorkerUser;
 import bookit.backend.model.enums.BusinessType;
 import jakarta.persistence.*;
@@ -27,6 +28,9 @@ public class Business implements Serializable {
     @SequenceGenerator(name = "business_id_seq", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "business_id_seq")
     private Long id;
+
+    @OneToOne(mappedBy = "business")
+    private BusinessOwnerUser owner;
 
     @Column(name = "name", unique = true)
     private String name;

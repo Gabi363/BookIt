@@ -2,14 +2,13 @@ package bookit.backend.controller;
 
 import bookit.backend.model.dto.BusinessDto;
 import bookit.backend.model.enums.UserRole;
-import bookit.backend.model.request.CreateBusinessRequest;
-import bookit.backend.model.request.CreateServiceRequest;
-import bookit.backend.model.request.CreateUserRequest;
-import bookit.backend.model.request.DeleteUserRequest;
+import bookit.backend.model.request.*;
 import bookit.backend.model.response.BusinessListResponse;
 import bookit.backend.model.response.BusinessResponse;
 import bookit.backend.service.AccountService;
 import bookit.backend.service.BusinessService;
+import bookit.backend.service.ServicesService;
+import bookit.backend.service.WorkingHoursService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -31,6 +30,8 @@ public class BusinessController {
 
     private final BusinessService businessService;
     private final AccountService accountService;
+    private final ServicesService servicesService;
+    private final WorkingHoursService workingHoursService;
     private final ModelMapper modelMapper;
 
     @GetMapping
@@ -106,8 +107,8 @@ public class BusinessController {
 
     @PostMapping("/{businessId}/worker")
     @ManagedOperation(description = "Add worker to business")
-    public ResponseEntity<?> addWorker(@Valid @RequestBody CreateUserRequest request,
-                                       @PathVariable long businessId) {
+    public ResponseEntity<?> deleteWorker(@Valid @RequestBody CreateUserRequest request,
+                                          @PathVariable long businessId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
         var b = businessService.getBusinessByOwnerId(ownerId);
@@ -129,8 +130,8 @@ public class BusinessController {
 
     @DeleteMapping("/{businessId}/worker")
     @ManagedOperation(description = "Delete worker")
-    public ResponseEntity<?> addWorker(@PathVariable long businessId,
-                                       @Valid @RequestBody DeleteUserRequest request) {
+    public ResponseEntity<?> deleteWorker(@PathVariable long businessId,
+                                          @Valid @RequestBody DeleteUserRequest request) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
         var b = businessService.getBusinessByOwnerId(ownerId);
@@ -162,7 +163,7 @@ public class BusinessController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        HttpStatus status = businessService.addService(businessId, request);
+        HttpStatus status = servicesService.addService(businessId, request);
         return ResponseEntity.status(status).build();
     }
 
@@ -184,7 +185,7 @@ public class BusinessController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        HttpStatus status = businessService.updateService(businessId, request, serviceId);
+        HttpStatus status = servicesService.updateService(businessId, request, serviceId);
         return ResponseEntity.status(status).build();
     }
 
@@ -205,7 +206,23 @@ public class BusinessController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        HttpStatus status = businessService.deleteService(serviceId, businessId);
+        HttpStatus status = servicesService.deleteService(serviceId, businessId);
+        return ResponseEntity.status(status).build();
+    }
+
+    @PostMapping("/working-hours/{businessId}")
+    @ManagedOperation(description = "Add working hours")
+    public ResponseEntity<?> addWorkingHours(@Valid @RequestBody AddWorkingHoursRequest request,
+                                             @PathVariable Long businessId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
+        UserRole role = modelMapper.map(auth.getAuthorities().iterator().next().toString(), UserRole.class);
+
+        if(role != UserRole.BUSINESS_OWNER) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        HttpStatus status = workingHoursService.addWorkingHours(businessId, ownerId, request);
         return ResponseEntity.status(status).build();
     }
 }

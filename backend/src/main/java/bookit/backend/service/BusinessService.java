@@ -1,20 +1,12 @@
 package bookit.backend.service;
 
 import bookit.backend.model.dto.BusinessDto;
-import bookit.backend.model.dto.user.BusinessOwnerUserDto;
 import bookit.backend.model.entity.Business;
-import bookit.backend.model.entity.BusinessWorkingHours;
 import bookit.backend.model.entity.user.BusinessOwnerUser;
-import bookit.backend.model.entity.user.User;
 import bookit.backend.model.enums.BusinessType;
-import bookit.backend.model.enums.WeekDay;
-import bookit.backend.model.request.AddWorkingHoursRequest;
 import bookit.backend.model.request.CreateBusinessRequest;
-import bookit.backend.model.request.CreateServiceRequest;
 import bookit.backend.repository.BusinessRepository;
-import bookit.backend.repository.ServiceRepository;
 import bookit.backend.repository.UserRepository;
-import bookit.backend.repository.WorkingHoursRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -22,7 +14,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -36,9 +27,6 @@ public class BusinessService {
     private final BusinessRepository businessRepository;
     private final UserRepository userRepository;
     private final BusinessAddressService addressService;
-    private final UserService userService;
-    private final ServiceRepository serviceRepository;
-    private final WorkingHoursRepository workingHoursRepository;
     private final ModelMapper modelMapper;
 
     public List<BusinessDto> getBusinesses() {
@@ -48,19 +36,13 @@ public class BusinessService {
                 .collect(Collectors.toList());
     }
 
-    public boolean businessExists(Long id) {
-        return businessRepository.existsById(id);
-    }
-
     public Optional<BusinessDto> getBusiness(long id) {
         return businessRepository.findById(id).map(entity -> modelMapper.map(entity, BusinessDto.class));
     }
 
     public Optional<BusinessDto> getBusinessByOwnerId(long ownerId) {
-        Optional<BusinessOwnerUserDto> owner = userService.getBusinessOwnerUserById(ownerId);
-        return owner.flatMap(businessOwnerUserDto -> businessRepository.findById(businessOwnerUserDto.getBusinessId())
-                .map(business -> modelMapper.map(business, BusinessDto.class)));
-
+        Optional<Business> optionalBusiness = businessRepository.findFirstByOwner_Id(ownerId);
+        return optionalBusiness.map(business -> modelMapper.map(business, BusinessDto.class));
     }
 
     public Optional<BusinessDto> createBusiness(CreateBusinessRequest request, long ownerId) {
@@ -101,79 +83,12 @@ public class BusinessService {
         business.setEmail(request.getEmail());
 
         businessRepository.save(business);
-        addressService.updateAddress(request.getAddressRequest(), business);
+        addressService.updateAddress(request.getAddressRequest(), business.getId());
 
         return HttpStatus.CREATED;
     }
 
-    public HttpStatus addService(long businessId, CreateServiceRequest request) {
-        Optional<Business> businessOptional;
-        if((businessOptional = businessRepository.findById(businessId)).isEmpty()){
-            return HttpStatus.NOT_FOUND;
-        }
-        Business business = businessOptional.get();
 
-        bookit.backend.model.entity.Service service = bookit.backend.model.entity.Service.builder()
-                .name(request.getName())
-                .description(request.getDescription())
-                .price(request.getPrice())
-                .category(request.getCategory())
-                .business(business)
-                .build();
-
-        serviceRepository.save(service);
-        return HttpStatus.CREATED;
-    }
-
-    public HttpStatus updateService(long businessId, CreateServiceRequest request, long serviceId) {
-        Optional<bookit.backend.model.entity.Service> serviceOptional = serviceRepository.findById(serviceId);
-        if(serviceOptional.isEmpty()) return HttpStatus.NOT_FOUND;
-
-        bookit.backend.model.entity.Service service = serviceOptional.get();
-        if(service.getBusiness().getId() != businessId) return HttpStatus.FORBIDDEN;
-
-        service.setName(request.getName());
-        service.setDescription(request.getDescription());
-        service.setPrice(request.getPrice());
-        service.setCategory(request.getCategory());
-
-        serviceRepository.save(service);
-        return HttpStatus.OK;
-    }
-
-    public HttpStatus deleteService(long businessId, long serviceId) {
-        Optional<bookit.backend.model.entity.Service> serviceOptional = serviceRepository.findById(serviceId);
-        if(serviceOptional.isEmpty()) return HttpStatus.NOT_FOUND;
-        bookit.backend.model.entity.Service service = serviceOptional.get();
-        if(service.getBusiness().getId() != businessId) return HttpStatus.FORBIDDEN;
-
-        serviceRepository.delete(service);
-        return HttpStatus.OK;
-    }
-
-    public HttpStatus addWorkingHours(long businessId, long ownerId, AddWorkingHoursRequest request) {
-        Optional<BusinessDto> businessOptional = getBusiness(businessId);
-        if(businessOptional.isEmpty()) return HttpStatus.NOT_FOUND;
-        Business business = modelMapper.map(businessOptional.get(), Business.class);
-
-        Optional<User> userOptional = userRepository.findById(ownerId);
-        if(userOptional.isEmpty()) return HttpStatus.NOT_FOUND;
-        if(modelMapper.map(userOptional.get(), BusinessOwnerUser.class).getBusiness().getId() != businessId) return HttpStatus.FORBIDDEN;
-
-        List<BusinessWorkingHours> workingHoursList = new ArrayList<>();
-        for(var dayRequest : request.getWorkingHoursList()) {
-            BusinessWorkingHours workingHours = BusinessWorkingHours.builder()
-                    .weekDay(modelMapper.map(dayRequest.getWeekDay(), WeekDay.class))
-                    .isOpen(dayRequest.getIsOpen())
-                    .startTime(dayRequest.getStartTime())
-                    .endTime(dayRequest.getEndTime())
-                    .business(business)
-                    .build();
-            workingHoursList.add(workingHours);
-        }
-        workingHoursRepository.saveAll(workingHoursList);
-        return HttpStatus.CREATED;
-    }
 
 }
 

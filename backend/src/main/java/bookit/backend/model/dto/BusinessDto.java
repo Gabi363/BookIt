@@ -1,7 +1,6 @@
 package bookit.backend.model.dto;
 
 import bookit.backend.model.dto.user.WorkerUserDto;
-import bookit.backend.model.entity.BusinessWorkingHours;
 import bookit.backend.model.entity.points.BusinessPoints;
 import bookit.backend.model.enums.BusinessType;
 import lombok.AllArgsConstructor;
@@ -28,6 +27,6 @@ public class BusinessDto implements Serializable {
     private List<BusinessRatingDto> ratings;
     private BusinessAddressDto address;
     private List<BusinessPoints> points;
-    private List<BusinessWorkingHours> workingHours;
+    private List<BusinessWorkingHoursDto> workingHours;
     private Double averageRating;
 }

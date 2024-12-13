@@ -35,8 +35,8 @@ public class BusinessAddressService {
         return Optional.of(modelMapper.map(address, BusinessAddressDto.class));
     }
 
-    public void updateAddress(CreateAddressRequest request, Business business) {
-        BusinessAddress address = addressRepository.findById(business.getId()).orElse(null);
+    public void updateAddress(CreateAddressRequest request, long businessId) {
+        BusinessAddress address = addressRepository.findById(businessId).orElse(null);
         if(address == null) return;
 
         address.setCity(request.getCity());
