@@ -7,41 +7,40 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
 
 import java.io.Serializable;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "visits")
+@Table(name = "reservartions")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Visit implements Serializable {
+public class Reservation implements Serializable {
 
     @Id
     @Column(name = "id", nullable = false)
-    @SequenceGenerator(name = "business_id_seq", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "business_id_seq")
+    @SequenceGenerator(name = "reservation_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "reservation_id_seq")
     private Long id;
 
     @ManyToOne
     @JoinColumn(name = "client_user_id", nullable = false)
-    private ClientUser clientUser;
+    private ClientUser client;
 
     @ManyToOne
     @JoinColumn(name = "worker_user_id", nullable = false)
-    private WorkerUser workerUser;
+    private WorkerUser worker;
 
     @Column(name = "date", nullable = false)
     private LocalDate date;
 
     @ManyToOne
-    @JoinColumn(name = "business", nullable = false)
+    @JoinColumn(name = "business_id", nullable = false)
     private Business business;
 
-    @Column(name = "checked")
-    @ColumnDefault("false")
-    private Boolean checked;
+    @ManyToOne
+    @JoinColumn(name = "service_id", nullable = false)
+    private Service service;
 }

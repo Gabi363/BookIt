@@ -2,6 +2,7 @@ package bookit.backend.model.entity.user;
 
 import bookit.backend.model.entity.Business;
 import bookit.backend.model.entity.Calendar;
+import bookit.backend.model.entity.Reservation;
 import bookit.backend.model.entity.rating.Rating;
 import bookit.backend.model.entity.rating.WorkerRating;
 import jakarta.persistence.*;
@@ -28,6 +29,9 @@ public class WorkerUser extends User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     @PrimaryKeyJoinColumn
     private Calendar calendar;
+
+    @OneToMany(mappedBy = "worker")
+    private List<Reservation> reservations;
 
     @Transient
     private Double averageRating = getAverageRating();

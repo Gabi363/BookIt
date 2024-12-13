@@ -1,6 +1,7 @@
 package bookit.backend.model.entity.user;
 
 import bookit.backend.model.entity.Calendar;
+import bookit.backend.model.entity.Reservation;
 import bookit.backend.model.entity.points.ClientPoints;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -22,4 +23,7 @@ public class ClientUser extends User {
 
     @OneToMany(mappedBy = "client")
     private List<ClientPoints> points;
+
+    @OneToMany(mappedBy = "client")
+    private List<Reservation> reservations;
 }

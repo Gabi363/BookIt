@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Entity
 @Table(name = "service")
@@ -37,4 +38,10 @@ public class Service implements Serializable {
 
     @Column(name = "price")
     private Double price;
+
+    @Column(name = "duration")
+    private Double duration;
+
+    @OneToMany(mappedBy = "service")
+    private List<Reservation> reservations;
 }

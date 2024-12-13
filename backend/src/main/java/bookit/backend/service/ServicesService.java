@@ -1,7 +1,6 @@
 package bookit.backend.service;
 
 import bookit.backend.model.dto.BusinessDto;
-import bookit.backend.model.dto.ServiceDto;
 import bookit.backend.model.entity.Business;
 import bookit.backend.model.request.CreateServiceRequest;
 import bookit.backend.repository.ServiceRepository;
@@ -24,10 +23,6 @@ public class ServicesService {
     private final ModelMapper modelMapper;
     private final ServiceRepository serviceRepository;
 
-    public Optional<ServiceDto> getServiceById(Long id) {
-        return serviceRepository.findById(id).map(service -> modelMapper.map(service, ServiceDto.class));
-    }
-
     public HttpStatus addService(long businessId, CreateServiceRequest request) {
         Optional<BusinessDto> businessOptional;
         if((businessOptional = businessService.getBusiness(businessId)).isEmpty()){
@@ -40,6 +35,7 @@ public class ServicesService {
                 .description(request.getDescription())
                 .price(request.getPrice())
                 .category(request.getCategory())
+                .duration(request.getDuration())
                 .business(business)
                 .build();
 
@@ -58,6 +54,7 @@ public class ServicesService {
         service.setDescription(request.getDescription());
         service.setPrice(request.getPrice());
         service.setCategory(request.getCategory());
+        service.setDuration(request.getDuration());
 
         serviceRepository.save(service);
         return HttpStatus.OK;

@@ -89,7 +89,7 @@ public class BusinessController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new BusinessResponse(business.get()));
     }
 
-    @PostMapping("/update/{ownerId}")
+    @PutMapping("/update/{ownerId}")
     @ManagedOperation(description = "Update business")
     public ResponseEntity<?> updateBusinessInfo(@Valid @RequestBody CreateBusinessRequest request,
                                                 @PathVariable long ownerId) {
@@ -107,8 +107,8 @@ public class BusinessController {
 
     @PostMapping("/{businessId}/worker")
     @ManagedOperation(description = "Add worker to business")
-    public ResponseEntity<?> deleteWorker(@Valid @RequestBody CreateUserRequest request,
-                                          @PathVariable long businessId) {
+    public ResponseEntity<?> addWorker(@Valid @RequestBody CreateUserRequest request,
+                                       @PathVariable long businessId) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         long ownerId = modelMapper.map(auth.getPrincipal(), long.class);
         var b = businessService.getBusinessByOwnerId(ownerId);
@@ -167,7 +167,7 @@ public class BusinessController {
         return ResponseEntity.status(status).build();
     }
 
-    @PostMapping("/{businessId}/service/{serviceId}")
+    @PutMapping("/{businessId}/service/{serviceId}")
     @ManagedOperation(description = "Update service")
     public ResponseEntity<?> updateService(@Valid @RequestBody CreateServiceRequest request,
                                            @PathVariable long businessId,

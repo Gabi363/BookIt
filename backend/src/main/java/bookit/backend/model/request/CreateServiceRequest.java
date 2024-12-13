@@ -18,4 +18,6 @@ public class CreateServiceRequest {
     private Double price;
     @Nullable
     private String category;
+    @NotNull
+    private Double duration;
 }
