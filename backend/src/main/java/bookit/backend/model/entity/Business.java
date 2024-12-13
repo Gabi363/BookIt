@@ -57,6 +57,9 @@ public class Business implements Serializable {
     @OneToMany(mappedBy = "business")
     private List<BusinessPoints> points;
 
+    @OneToMany(mappedBy = "business")
+    private List<BusinessWorkingHours> workingHours;
+
     @Transient
     private Double averageRating = getAverageRating();
 

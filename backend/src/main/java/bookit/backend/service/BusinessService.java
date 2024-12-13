@@ -3,13 +3,18 @@ package bookit.backend.service;
 import bookit.backend.model.dto.BusinessDto;
 import bookit.backend.model.dto.user.BusinessOwnerUserDto;
 import bookit.backend.model.entity.Business;
+import bookit.backend.model.entity.BusinessWorkingHours;
 import bookit.backend.model.entity.user.BusinessOwnerUser;
+import bookit.backend.model.entity.user.User;
 import bookit.backend.model.enums.BusinessType;
+import bookit.backend.model.enums.WeekDay;
+import bookit.backend.model.request.AddWorkingHoursRequest;
 import bookit.backend.model.request.CreateBusinessRequest;
 import bookit.backend.model.request.CreateServiceRequest;
 import bookit.backend.repository.BusinessRepository;
 import bookit.backend.repository.ServiceRepository;
 import bookit.backend.repository.UserRepository;
+import bookit.backend.repository.WorkingHoursRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -17,6 +22,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -32,6 +38,7 @@ public class BusinessService {
     private final BusinessAddressService addressService;
     private final UserService userService;
     private final ServiceRepository serviceRepository;
+    private final WorkingHoursRepository workingHoursRepository;
     private final ModelMapper modelMapper;
 
     public List<BusinessDto> getBusinesses() {
@@ -144,4 +151,29 @@ public class BusinessService {
         return HttpStatus.OK;
     }
 
+    public HttpStatus addWorkingHours(long businessId, long ownerId, AddWorkingHoursRequest request) {
+        Optional<BusinessDto> businessOptional = getBusiness(businessId);
+        if(businessOptional.isEmpty()) return HttpStatus.NOT_FOUND;
+        Business business = modelMapper.map(businessOptional.get(), Business.class);
+
+        Optional<User> userOptional = userRepository.findById(ownerId);
+        if(userOptional.isEmpty()) return HttpStatus.NOT_FOUND;
+        if(modelMapper.map(userOptional.get(), BusinessOwnerUser.class).getBusiness().getId() != businessId) return HttpStatus.FORBIDDEN;
+
+        List<BusinessWorkingHours> workingHoursList = new ArrayList<>();
+        for(var dayRequest : request.getWorkingHoursList()) {
+            BusinessWorkingHours workingHours = BusinessWorkingHours.builder()
+                    .weekDay(modelMapper.map(dayRequest.getWeekDay(), WeekDay.class))
+                    .isOpen(dayRequest.getIsOpen())
+                    .startTime(dayRequest.getStartTime())
+                    .endTime(dayRequest.getEndTime())
+                    .business(business)
+                    .build();
+            workingHoursList.add(workingHours);
+        }
+        workingHoursRepository.saveAll(workingHoursList);
+        return HttpStatus.CREATED;
+    }
+
 }
+
