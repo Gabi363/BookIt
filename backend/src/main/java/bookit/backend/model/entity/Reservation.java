@@ -7,9 +7,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Formula;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "reservartions")
@@ -34,7 +35,7 @@ public class Reservation implements Serializable {
     private WorkerUser worker;
 
     @Column(name = "date", nullable = false)
-    private LocalDate date;
+    private LocalDateTime date;
 
     @ManyToOne
     @JoinColumn(name = "business_id", nullable = false)
@@ -43,4 +44,8 @@ public class Reservation implements Serializable {
     @ManyToOne
     @JoinColumn(name = "service_id", nullable = false)
     private Service service;
+
+    @Formula(value = "(SELECT s.duration FROM service s WHERE s.id=service_id)")
+    private Double duration;
+
 }
