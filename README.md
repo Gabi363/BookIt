@@ -1,5 +1,8 @@
 # BookIt
 
+
+Link do dokumentacji, opisów endpointów po odpaleniu serwera: http://localhost:8080/swagger-ui/index.html
+
 https://www.figma.com/design/wSnueDlelozNvBauS0550k/Untitled?node-id=1-2062&t=tzZzTN1FXAvR92ov-1
 
 ![462578690_543930625085993_5504239582166571688_n](https://github.com/user-attachments/assets/4a8a5810-eb5f-489d-86e7-041c9c8ccb4f)
