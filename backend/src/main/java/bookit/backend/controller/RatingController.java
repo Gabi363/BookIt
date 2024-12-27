@@ -4,13 +4,13 @@ import bookit.backend.model.request.CreateRatingRequest;
 import bookit.backend.service.AccountService;
 import bookit.backend.service.LoggedUserInfo;
 import bookit.backend.service.RatingService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,7 +24,7 @@ public class RatingController {
     private final ModelMapper modelMapper;
 
     @PostMapping("/business/{businessId}")
-    @ManagedOperation(description = "Add business rating")
+    @Operation(summary = "Add business rating")
     public ResponseEntity<?> addBusinessRating(@Valid @RequestBody CreateRatingRequest request,
                                                @PathVariable long businessId) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
@@ -37,7 +37,7 @@ public class RatingController {
     }
 
     @PostMapping("/worker/{workerId}")
-    @ManagedOperation(description = "Add worker rating")
+    @Operation(summary = "Add worker rating")
     public ResponseEntity<?> addWorkerRating(@Valid @RequestBody CreateRatingRequest request,
                                              @PathVariable long workerId) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
@@ -50,7 +50,7 @@ public class RatingController {
     }
 
     @PostMapping("/update/{ratingId}")
-    @ManagedOperation(description = "Update rating")
+    @Operation(summary = "Update rating")
     public ResponseEntity<?> updateRating(@Valid @RequestBody CreateRatingRequest request,
                                           @PathVariable long ratingId) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
@@ -60,7 +60,7 @@ public class RatingController {
     }
 
     @DeleteMapping("/{ratingId}")
-    @ManagedOperation(description = "Delete rating")
+    @Operation(summary = "Delete rating")
     public ResponseEntity<?> deleteRating(@PathVariable long ratingId) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
 

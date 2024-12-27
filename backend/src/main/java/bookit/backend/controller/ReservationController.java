@@ -6,6 +6,7 @@ import bookit.backend.model.response.ReservationsListResponse;
 import bookit.backend.service.AccountService;
 import bookit.backend.service.LoggedUserInfo;
 import bookit.backend.service.ReservationService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,7 @@ public class ReservationController {
 
 
     @PostMapping("/book/{serviceId}")
+    @Operation(summary = "Make the reservation for an appointment")
     public ResponseEntity<?> makeReservation(@RequestBody AddReservationRequest request,
                                              @PathVariable long serviceId) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
@@ -41,6 +43,7 @@ public class ReservationController {
     }
 
     @GetMapping()
+    @Operation(summary = "Get all reservations booked for current user")
     public ResponseEntity<?> getReservationsForUser() {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
         List<ReservationDto> reservations = null;
@@ -59,6 +62,7 @@ public class ReservationController {
     }
 
     @DeleteMapping("/{reservationId}")
+    @Operation(summary = "Delete given reservation")
     public ResponseEntity<?> deleteReservation(@PathVariable long reservationId) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
         if(userInfo.isWorker()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();

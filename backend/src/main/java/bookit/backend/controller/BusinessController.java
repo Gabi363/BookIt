@@ -5,13 +5,13 @@ import bookit.backend.model.request.*;
 import bookit.backend.model.response.BusinessListResponse;
 import bookit.backend.model.response.BusinessResponse;
 import bookit.backend.service.*;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -29,13 +29,13 @@ public class BusinessController {
     private final ModelMapper modelMapper;
 
     @GetMapping
-    @ManagedOperation(description = "Get list of all businesses")
+    @Operation(summary = "Get list of all businesses")
     public BusinessListResponse getBusinesses() {
         return new BusinessListResponse(businessService.getBusinesses());
     }
 
     @GetMapping("/{businessId}")
-    @ManagedOperation(description = "Get business details")
+    @Operation(summary = "Get business details")
     public ResponseEntity<?> getBusiness(@PathVariable long businessId) {
         Optional<BusinessDto> business = businessService.getBusiness(businessId);
         if(business.isEmpty()) {
@@ -46,7 +46,7 @@ public class BusinessController {
     }
 
     @GetMapping("/owner/{ownerId}")
-    @ManagedOperation(description = "Get business of a user")
+    @Operation(summary = "Get business of a user")
     public ResponseEntity<?> getBusinessOfOwner(@PathVariable long ownerId) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
 
@@ -63,7 +63,7 @@ public class BusinessController {
     }
 
     @PostMapping
-    @ManagedOperation(description = "Add business")
+    @Operation(summary = "Add business")
     public ResponseEntity<?> createBusiness(@Valid @RequestBody CreateBusinessRequest request) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
         if(userInfo.isNotBusinessOwner()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -81,7 +81,7 @@ public class BusinessController {
     }
 
     @PutMapping("/update/{ownerId}")
-    @ManagedOperation(description = "Update business")
+    @Operation(summary = "Update business")
     public ResponseEntity<?> updateBusinessInfo(@Valid @RequestBody CreateBusinessRequest request,
                                                 @PathVariable long ownerId) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
@@ -98,7 +98,7 @@ public class BusinessController {
     }
 
     @PostMapping("/{businessId}/worker")
-    @ManagedOperation(description = "Add worker to business")
+    @Operation(summary = "Add worker to business")
     public ResponseEntity<?> addWorker(@Valid @RequestBody CreateUserRequest request,
                                        @PathVariable long businessId) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
@@ -117,7 +117,7 @@ public class BusinessController {
     }
 
     @DeleteMapping("/{businessId}/worker")
-    @ManagedOperation(description = "Delete worker")
+    @Operation(summary = "Delete worker")
     public ResponseEntity<?> deleteWorker(@PathVariable long businessId,
                                           @Valid @RequestBody DeleteUserRequest request) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
@@ -132,7 +132,7 @@ public class BusinessController {
     }
 
     @PostMapping("/{businessId}/service")
-    @ManagedOperation(description = "Add service to business")
+    @Operation(summary = "Add service to business")
     public ResponseEntity<?> addService(@Valid @RequestBody CreateServiceRequest request,
                                         @PathVariable long businessId) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
@@ -151,7 +151,7 @@ public class BusinessController {
     }
 
     @PutMapping("/{businessId}/service/{serviceId}")
-    @ManagedOperation(description = "Update service")
+    @Operation(summary = "Update service")
     public ResponseEntity<?> updateService(@Valid @RequestBody CreateServiceRequest request,
                                            @PathVariable long businessId,
                                            @PathVariable long serviceId) {
@@ -169,7 +169,7 @@ public class BusinessController {
     }
 
     @DeleteMapping("/{businessId}/service/{serviceId}")
-    @ManagedOperation(description = "Delete service")
+    @Operation(summary = "Delete service")
     public ResponseEntity<?> deleteService(@PathVariable long businessId,
                                            @PathVariable long serviceId) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
@@ -186,7 +186,7 @@ public class BusinessController {
     }
 
     @PostMapping("/working-hours/{businessId}")
-    @ManagedOperation(description = "Add working hours")
+    @Operation(summary = "Add working hours")
     public ResponseEntity<?> addWorkingHours(@Valid @RequestBody AddWorkingHoursRequest request,
                                              @PathVariable Long businessId) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
@@ -200,7 +200,7 @@ public class BusinessController {
     }
 
     @PutMapping("/working-hours/{businessId}")
-    @ManagedOperation(description = "Update working hours")
+    @Operation(summary = "Update working hours")
     public ResponseEntity<?> updateWorkingHours(@Valid @RequestBody AddWorkingHoursRequest request,
                                                 @PathVariable Long businessId) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();

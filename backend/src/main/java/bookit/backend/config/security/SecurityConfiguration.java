@@ -32,11 +32,12 @@ public class SecurityConfiguration {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/index.html", "/webjars/**",
-                                "/auth/register/client", "/auth/register/business", "/auth/login", "/auth/refresh",
-                                "/business", "/business/*", "reservation/choose-date/*").permitAll()
-                        .requestMatchers("/user", "/auth/register/admin").hasAuthority("ADMIN")
-                        .anyRequest().authenticated()
+                                .requestMatchers("/v3/api-docs/**", "/swagger-ui/*", "/index.html", "/webjars/**",
+                                        "/auth/register/client", "/auth/register/business", "/auth/login", "/auth/refresh",
+                                        "/business", "/business/*", "reservation/choose-date/*").permitAll()
+                                .requestMatchers("/user", "/auth/register/admin").hasAuthority("ADMIN")
+                                .anyRequest().authenticated()
+//                                .anyRequest().permitAll()
                 )
                 .sessionManagement(sess -> sess
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

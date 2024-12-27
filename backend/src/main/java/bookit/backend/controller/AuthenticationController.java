@@ -11,11 +11,11 @@ import bookit.backend.service.AccountService;
 import bookit.backend.service.JwtService;
 import bookit.backend.service.UserService;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,43 +34,43 @@ public class AuthenticationController {
 
     @PostMapping("register/admin")
     @PreAuthorize("hasAuthority('ADMIN')")
-    @ManagedOperation(description = "Create new admin account")
+    @Operation(summary = "Create new admin account")
     public ResponseEntity<?> createAdminUser(@Valid @RequestBody CreateUserRequest request) {
         request.setUserRole(UserRole.ADMIN);
         Optional<UserDto> user = accountService.createUser(request);
-        if(user.isEmpty()) {
+        if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("User with given e-mail already exists!");
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(new UserResponse(user.get()));
     }
 
     @PostMapping("register/client")
-    @ManagedOperation(description = "Create new user account")
+    @Operation(summary = "Create new user account")
     public ResponseEntity<?> createClientUser(@Valid @RequestBody CreateUserRequest request) {
         request.setUserRole(UserRole.CLIENT);
         Optional<UserDto> user = accountService.createUser(request);
-        if(user.isEmpty()) {
+        if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("User with given e-mail already exists!");
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(new UserResponse(user.get()));
     }
 
     @PostMapping("register/business")
-    @ManagedOperation(description = "Create new user account")
+    @Operation(summary = "Create new user account")
     public ResponseEntity<?> createBusinessOwnerUser(@Valid @RequestBody CreateUserRequest request) {
         request.setUserRole(UserRole.BUSINESS_OWNER);
         Optional<UserDto> user = accountService.createUser(request);
-        if(user.isEmpty()) {
+        if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("User with given e-mail already exists!");
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(new UserResponse(user.get()));
     }
 
     @PostMapping("login")
-    @ManagedOperation(description = "Login to account")
+    @Operation(summary = "Login to account")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         Optional<UserDto> user = accountService.login(request);
-        if(user.isEmpty()) {
+        if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Wrong e-mail or password!");
         }
         String token = jwtService.generateToken(user.get().getEmail(), user.get().getId());
@@ -78,7 +78,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("refresh")
-    @ManagedOperation(description = "Refresh jwt token")
+    @Operation(summary = "Refresh jwt token")
     public ResponseEntity<?> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         UserDto user;
         String email = "";

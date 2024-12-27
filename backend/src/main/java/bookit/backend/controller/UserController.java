@@ -9,13 +9,13 @@ import bookit.backend.model.response.user.UserResponse;
 import bookit.backend.service.AccountService;
 import bookit.backend.service.LoggedUserInfo;
 import bookit.backend.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jmx.export.annotation.ManagedOperation;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,13 +34,13 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('ADMIN')")
-    @ManagedOperation(description = "Get list of all users")
+    @Operation(summary = "Get list of all users")
     public UserListResponse getUsers() {
         return new UserListResponse(userService.getUsers());
     }
 
     @GetMapping("/current")
-    @ManagedOperation(description = "Get current user's information")
+    @Operation(summary = "Get current user's information")
     public ResponseEntity<?> getCurrentUser() {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
 
@@ -65,7 +65,7 @@ public class UserController {
     }
 
     @PostMapping("/{userId}")
-    @ManagedOperation(description = "Update user's information")
+    @Operation(summary = "Update user's information")
     public ResponseEntity<?> updateUser(@Valid @RequestBody CreateUserRequest request,
                                         @PathVariable long userId) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
@@ -87,7 +87,7 @@ public class UserController {
 
 
     @DeleteMapping("/delete/{userId}")
-    @ManagedOperation(description = "Delete user")
+    @Operation(summary = "Delete user")
     public ResponseEntity<?> deleteUser(@Valid @RequestBody DeleteUserRequest request,
                                         @PathVariable long userId) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
