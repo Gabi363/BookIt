@@ -24,10 +24,26 @@ public class ReservationController {
     private final ReservationService reservationService;
     private final AccountService accountService;
 
-//    @GetMapping("/choose-date/{serviceId}")
-//    public ReservationOptionsResponse chooseDate(@RequestParam LocalDate date, @PathVariable long serviceId) {
-//        return reservationService.getReservationOptions(serviceId, date);
-//    }
+    @GetMapping("/choose-date/{serviceId}")
+    public ResponseEntity<?> chooseDate(@RequestParam String date, @PathVariable long serviceId) {
+        return ResponseEntity.ok(reservationService.getReservationOptions(serviceId, date));    // @TODO nie działa
+    }
+
+    @GetMapping("/day")
+    @Operation(summary = "Get reservations for given day")
+    public ResponseEntity<?> getReservationsForDay(@RequestParam String date) {
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        List<ReservationDto> reservations = null;
+        if(!userInfo.isNotBusinessOwner()) {
+            reservations = reservationService.getReservationsForBusinessOwner(userInfo.getId());
+        }
+        else if(userInfo.isWorker()) {
+            reservations = reservationService.getReservationsForWorker(userInfo.getId());
+        }
+        else return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
+        return ResponseEntity.ok(reservationService.filterReservationsForDay(date, reservations));
+    }
 
 
     @PostMapping("/book/{serviceId}")
@@ -43,7 +59,7 @@ public class ReservationController {
     }
 
     @GetMapping()
-    @Operation(summary = "Get all reservations booked for current user")
+    @Operation(summary = "Get all reservations booked for current user - client, worker or business owner (all reservations for business)")
     public ResponseEntity<?> getReservationsForUser() {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
         List<ReservationDto> reservations = null;

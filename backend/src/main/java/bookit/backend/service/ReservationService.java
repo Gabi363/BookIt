@@ -1,6 +1,8 @@
 package bookit.backend.service;
 
+import bookit.backend.model.dto.BusinessDto;
 import bookit.backend.model.dto.ReservationDto;
+import bookit.backend.model.dto.ServiceDto;
 import bookit.backend.model.entity.Business;
 import bookit.backend.model.entity.Reservation;
 import bookit.backend.model.entity.user.ClientUser;
@@ -16,6 +18,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -32,25 +35,26 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final UserRepository userRepository;
     private final ServiceRepository serviceRepository;
+    private final ServicesService servicesService;
     private final BusinessService businessService;
     private final ModelMapper modelMapper;
 
 
-    public List<ReservationDto> getReservationsForGivenDay(LocalDateTime date, Long businessId) {
-        return reservationRepository.findAllByBusiness_IdAndDate(businessId, date)
-                .stream()
-                .map(reservation -> modelMapper.map(reservation, ReservationDto.class))
-                .collect(Collectors.toList());
-    }
+    public List<ReservationDto> getReservationOptions(Long serviceId, String date) {
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate localDate = LocalDate.parse(date, dateFormatter);
 
-//    public ReservationOptionsResponse getReservationOptions(Long serviceId, LocalDate date) {
-//        ServiceDto serviceDto = servicesService.getServiceById(serviceId).orElse(null);
-//        if (serviceDto == null) return null;
-//        BusinessDto businessDto = businessService.getBusiness(serviceDto.getBusinessId()).orElse(null);
-//        if (businessDto == null) return null;
-//        List<ReservationDto> reservationDtoList = getReservationsForGivenDay(date, businessDto.getId());
-//
-//    }
+        ServiceDto serviceDto = servicesService.getServiceById(serviceId).orElse(null);
+        if (serviceDto == null) return null;
+        BusinessDto businessDto = businessService.getBusiness(serviceDto.getBusinessId()).orElse(null);
+        if (businessDto == null) return null;
+        List<ReservationDto> reservationDtoList = reservationRepository.findAllByBusiness_Id(businessDto.getId())
+                .stream()
+                .filter(r -> r.getDate().toLocalDate().isEqual(localDate))
+                .map(r -> modelMapper.map(r, ReservationDto.class))
+                .toList();
+        return reservationDtoList;
+    }
 
     public HttpStatus addReservation(AddReservationRequest request, long serviceId, long clientId) {
         Optional<bookit.backend.model.entity.Service> service = serviceRepository.findById(serviceId);
@@ -64,7 +68,7 @@ public class ReservationService {
         Optional<WorkerUser> worker;
         if(request.getWorkerId() != null) worker = userRepository.findById(request.getWorkerId())
                 .map(user -> modelMapper.map(user, WorkerUser.class));
-        else worker = business.getWorkers().stream().findFirst();
+        else worker = business.getWorkers().stream().findFirst();       // @TODO check if workers are available
         if(worker.isEmpty()) return HttpStatus.NOT_FOUND;
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
@@ -99,6 +103,15 @@ public class ReservationService {
                 .stream()
                 .map(r -> modelMapper.map(r, ReservationDto.class))
                 .toList();
+    }
+
+    public List<ReservationDto> filterReservationsForDay(String date, List<ReservationDto> reservations) {
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate localDate = LocalDate.parse(date, dateFormatter);
+
+        return reservations.stream()
+                .filter(r -> r.getDate().toLocalDate().isEqual(localDate))
+                .collect(Collectors.toList());
     }
 
     public HttpStatus deleteReservation(long reservationId, LoggedUserInfo user) {

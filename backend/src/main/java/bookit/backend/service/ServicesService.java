@@ -28,6 +28,10 @@ public class ServicesService {
         return serviceRepository.findById(id).map(service -> modelMapper.map(service, ServiceDto.class));
     }
 
+    public Optional<Double> getServiceDurationById(Long id) {
+        return serviceRepository.findById(id).map(bookit.backend.model.entity.Service::getDuration);
+    }
+
     public HttpStatus addService(long businessId, CreateServiceRequest request) {
         Optional<BusinessDto> businessOptional;
         if((businessOptional = businessService.getBusiness(businessId)).isEmpty()){
