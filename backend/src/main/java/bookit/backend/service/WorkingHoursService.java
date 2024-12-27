@@ -67,7 +67,6 @@ public class WorkingHoursService {
 
         List<BusinessWorkingHours> workingHoursList = new ArrayList<>();
         for(var dayRequest : request.getWorkingHoursList()) {
-            log.info(dayRequest.toString());
             BusinessWorkingHours day = existingWorkingHours.stream().filter(d -> d.getWeekDay() == dayRequest.getWeekDay()).findFirst().orElse(null);
             if(day == null) continue;
             day.setStartTime(dayRequest.getStartTime());
