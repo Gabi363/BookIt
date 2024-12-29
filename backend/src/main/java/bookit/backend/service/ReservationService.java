@@ -20,7 +20,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -37,21 +39,25 @@ public class ReservationService {
     private final ServiceRepository serviceRepository;
     private final ServicesService servicesService;
     private final BusinessService businessService;
+    private final WorkingHoursService workingHoursService;
     private final ModelMapper modelMapper;
 
 
     public List<ReservationDto> getReservationOptions(Long serviceId, String date) {
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         LocalDate localDate = LocalDate.parse(date, dateFormatter);
 
         ServiceDto serviceDto = servicesService.getServiceById(serviceId).orElse(null);
         if (serviceDto == null) return null;
         BusinessDto businessDto = businessService.getBusiness(serviceDto.getBusinessId()).orElse(null);
         if (businessDto == null) return null;
+        List<LocalTime> workingHours = workingHoursService.getWorkingHoursForDate(localDate, businessDto.getId());
+
         List<ReservationDto> reservationDtoList = reservationRepository.findAllByBusiness_Id(businessDto.getId())
                 .stream()
                 .filter(r -> r.getDate().toLocalDate().isEqual(localDate))
                 .map(r -> modelMapper.map(r, ReservationDto.class))
+                .sorted(Comparator.comparing(ReservationDto::getDate))
                 .toList();
         return reservationDtoList;
     }

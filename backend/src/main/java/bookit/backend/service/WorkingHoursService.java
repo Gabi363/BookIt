@@ -14,6 +14,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -42,12 +45,25 @@ public class WorkingHoursService {
         if(existingWorkingHours.size() >= 7 || request.getWorkingHoursList().size() > 7) return HttpStatus.CONFLICT;
 
         List<BusinessWorkingHours> workingHoursList = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
         for(var dayRequest : request.getWorkingHoursList()) {
+            LocalTime startTime = null;
+            LocalTime endTime = null;
+            if(dayRequest.getStartTime() != null && dayRequest.getEndTime() != null) {
+                try {
+                    startTime = LocalTime.parse(dayRequest.getStartTime(), formatter);
+                    endTime = LocalTime.parse(dayRequest.getEndTime(), formatter);
+                } catch (Exception e) {
+                    log.error("Invalid time format: " + e.getMessage());
+                    return HttpStatus.BAD_REQUEST;
+                }
+            }
+            log.info(startTime);
             BusinessWorkingHours workingHours = BusinessWorkingHours.builder()
                     .weekDay(modelMapper.map(dayRequest.getWeekDay(), WeekDay.class))
                     .isOpen(dayRequest.getIsOpen())
-                    .startTime(dayRequest.getStartTime())
-                    .endTime(dayRequest.getEndTime())
+                    .startTime(startTime)
+                    .endTime(endTime)
                     .business(business)
                     .build();
             workingHoursList.add(workingHours);
@@ -65,11 +81,20 @@ public class WorkingHoursService {
         if(request.getWorkingHoursList().size() > 7) return HttpStatus.CONFLICT;
 
         List<BusinessWorkingHours> workingHoursList = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
         for(var dayRequest : request.getWorkingHoursList()) {
             BusinessWorkingHours day = existingWorkingHours.stream().filter(d -> d.getWeekDay() == dayRequest.getWeekDay()).findFirst().orElse(null);
             if(day == null) continue;
-            day.setStartTime(dayRequest.getStartTime());
-            day.setEndTime(dayRequest.getEndTime());
+
+            LocalTime startTime = null;
+            LocalTime endTime = null;
+            if(dayRequest.getStartTime() != null && dayRequest.getEndTime() != null){
+                startTime = LocalTime.parse(dayRequest.getStartTime(), formatter);
+                endTime = LocalTime.parse(dayRequest.getEndTime(), formatter);
+            }
+
+            day.setStartTime(startTime);
+            day.setEndTime(endTime);
             day.setIsOpen(dayRequest.getIsOpen());
             workingHoursList.add(day);
         }
@@ -77,5 +102,9 @@ public class WorkingHoursService {
         return HttpStatus.OK;
     }
 
-
+    public List<LocalTime> getWorkingHoursForDate(LocalDate date, Long businessId) {
+        var weekDay = modelMapper.map(date.getDayOfWeek(), WeekDay.class);
+        BusinessWorkingHours workingHours = workingHoursRepository.findByBusiness_IdAndWeekDay(businessId, weekDay);
+        return List.of(workingHours.getStartTime(), workingHours.getEndTime());
+    }
 }

@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "business_working_hours")
@@ -34,11 +35,11 @@ public class BusinessWorkingHours implements Serializable {
     @Column(name = "is_open", nullable = false)
     private Boolean isOpen;
 
-    @Column(name = "start_time", nullable = true)
+    @Column(name = "start_time")
 //    @Pattern(regexp = "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
-    private String startTime;
+    private LocalTime startTime;
 
-    @Column(name = "end_time", nullable = true)
+    @Column(name = "end_time")
 //    @Pattern(regexp = "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
-    private String endTime;
+    private LocalTime endTime;
 }
