@@ -7,6 +7,7 @@ import bookit.backend.model.enums.UserRole;
 import bookit.backend.model.request.CreateUserRequest;
 import bookit.backend.model.request.LoginRequest;
 import bookit.backend.repository.BusinessRepository;
+import bookit.backend.repository.RatingRepository;
 import bookit.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class AccountService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final UserService userService;
     private final BusinessRepository businessRepository;
+    private final RatingRepository ratingRepository;
 
 
     public Optional<UserDto> createUser(CreateUserRequest request) {
@@ -229,39 +231,40 @@ public class AccountService {
     }
 
     public HttpStatus deleteWorkerUserByOwner(String email) {
-        var userDto = userService.getUserByEmail(email);
-        if(userDto.isEmpty()) return HttpStatus.NOT_FOUND;
-        if(userDto.get().getUserRole() != UserRole.WORKER) return HttpStatus.FORBIDDEN;
+        var userOptional = userRepository.findByEmail(email);
+        if(userOptional.isEmpty()) return HttpStatus.NOT_FOUND;
+        if(userOptional.get().getUserRole() != UserRole.WORKER) return HttpStatus.FORBIDDEN;
 
-        WorkerUser worker = modelMapper.map(userDto.get(), WorkerUser.class);
-        User user = modelMapper.map(userDto.get(), User.class);
+        WorkerUser worker = modelMapper.map(userOptional.get(), WorkerUser.class);
+        User user = modelMapper.map(userOptional.get(), User.class);
         userRepository.delete(worker);
         userRepository.delete(user);
         return HttpStatus.OK;
     }
 
     public HttpStatus deleteUserByEmail(String email) {
-        var userDto = userService.getUserByEmail(email);
-        if(userDto.isEmpty()) return HttpStatus.NOT_FOUND;
+        var userOptional = userRepository.findByEmail(email);
+        if(userOptional.isEmpty()) return HttpStatus.NOT_FOUND;
 
-        UserRole role = userDto.get().getUserRole();
+        UserRole role = userOptional.get().getUserRole();
+        log.info(role.toString());
         if(role == UserRole.ADMIN) {
-            AdminUser admin = modelMapper.map(userDto.get(), AdminUser.class);
+            AdminUser admin = modelMapper.map(userOptional.get(), AdminUser.class);
             userRepository.delete(admin);
         }
         if(role == UserRole.BUSINESS_OWNER) {
-            BusinessOwnerUser owner = modelMapper.map(userDto.get(), BusinessOwnerUser.class);
+            BusinessOwnerUser owner = modelMapper.map(userOptional.get(), BusinessOwnerUser.class);
             userRepository.delete(owner);
         }
         if(role == UserRole.WORKER) {
-            WorkerUser worker = modelMapper.map(userDto.get(), WorkerUser.class);
+            WorkerUser worker = modelMapper.map(userOptional.get(), WorkerUser.class);
             userRepository.delete(worker);
         }
         if(role == UserRole.CLIENT) {
-            ClientUser client = modelMapper.map(userDto.get(), ClientUser.class);
+            ClientUser client = modelMapper.map(userOptional.get(), ClientUser.class);
             userRepository.delete(client);
         }
-        User user = modelMapper.map(userDto.get(), User.class);
+        User user = modelMapper.map(userOptional.get(), User.class);
         userRepository.delete(user);
         return HttpStatus.OK;
     }

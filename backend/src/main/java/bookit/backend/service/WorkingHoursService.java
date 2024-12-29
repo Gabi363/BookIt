@@ -1,10 +1,9 @@
 package bookit.backend.service;
 
 import bookit.backend.model.dto.BusinessDto;
-import bookit.backend.model.dto.user.UserDto;
+import bookit.backend.model.dto.user.BusinessOwnerUserDto;
 import bookit.backend.model.entity.Business;
 import bookit.backend.model.entity.BusinessWorkingHours;
-import bookit.backend.model.entity.user.BusinessOwnerUser;
 import bookit.backend.model.enums.WeekDay;
 import bookit.backend.model.request.AddWorkingHoursRequest;
 import bookit.backend.repository.WorkingHoursRepository;
@@ -35,10 +34,10 @@ public class WorkingHoursService {
         if(businessOptional.isEmpty()) return HttpStatus.NOT_FOUND;
         Business business = modelMapper.map(businessOptional.get(), Business.class);
 
-        Optional<UserDto> userOptional = userService.getUserById(ownerId);
+        Optional<BusinessOwnerUserDto> userOptional = userService.getBusinessOwnerUserById(ownerId);
         if(userOptional.isEmpty()) return HttpStatus.NOT_FOUND;
-        if(modelMapper.map(userOptional.get(), BusinessOwnerUser.class).getBusiness().getId() != businessId) return HttpStatus.FORBIDDEN;
 
+        if(userOptional.get().getBusinessId() != businessId) return HttpStatus.FORBIDDEN;
         List<BusinessWorkingHours> existingWorkingHours = workingHoursRepository.findAllByBusiness_Id(businessId);
         if(existingWorkingHours.size() >= 7 || request.getWorkingHoursList().size() > 7) return HttpStatus.CONFLICT;
 

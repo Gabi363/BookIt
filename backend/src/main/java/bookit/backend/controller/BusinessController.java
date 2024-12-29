@@ -45,16 +45,16 @@ public class BusinessController {
         return ResponseEntity.ok().body(new BusinessResponse(business.get()));
     }
 
-    @GetMapping("/owner/{ownerId}")
+    @GetMapping("/owner")
     @Operation(summary = "Get business of a user")
-    public ResponseEntity<?> getBusinessOfOwner(@PathVariable long ownerId) {
+    public ResponseEntity<?> getBusinessOfOwner() {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
 
-        if(userInfo.isNotAdmin() && userInfo.getId() != ownerId) {
+        if(userInfo.isNotAdmin() && userInfo.isNotBusinessOwner()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        Optional<BusinessDto> business = businessService.getBusinessByOwnerId(ownerId);
+        Optional<BusinessDto> business = businessService.getBusinessByOwnerId(userInfo.getId());
         if(business.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Business does not exist!");
         }
@@ -80,20 +80,19 @@ public class BusinessController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new BusinessResponse(business.get()));
     }
 
-    @PutMapping("/update/{ownerId}")
+    @PutMapping("/update")
     @Operation(summary = "Update business")
-    public ResponseEntity<?> updateBusinessInfo(@Valid @RequestBody CreateBusinessRequest request,
-                                                @PathVariable long ownerId) {
+    public ResponseEntity<?> updateBusinessInfo(@Valid @RequestBody CreateBusinessRequest request) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
-        if(userInfo.isNotAdmin() && userInfo.getId() != ownerId) {
+        if(userInfo.isNotAdmin() && userInfo.isNotBusinessOwner()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        if(businessService.getBusinessByOwnerId(ownerId).isEmpty()) {
+        if(businessService.getBusinessByOwnerId(userInfo.getId()).isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Business does not exist!");
         }
 
-        HttpStatus status = businessService.updateBusinessInfo(request, ownerId);
+        HttpStatus status = businessService.updateBusinessInfo(request, userInfo.getId());
         return ResponseEntity.status(status).build();
     }
 
