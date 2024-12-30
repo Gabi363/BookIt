@@ -36,10 +36,8 @@ public class BusinessWorkingHours implements Serializable {
     private Boolean isOpen;
 
     @Column(name = "start_time")
-//    @Pattern(regexp = "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
     private LocalTime startTime;
 
     @Column(name = "end_time")
-//    @Pattern(regexp = "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
     private LocalTime endTime;
 }

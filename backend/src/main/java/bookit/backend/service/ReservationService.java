@@ -3,11 +3,14 @@ package bookit.backend.service;
 import bookit.backend.model.dto.BusinessDto;
 import bookit.backend.model.dto.ReservationDto;
 import bookit.backend.model.dto.ServiceDto;
+import bookit.backend.model.dto.user.WorkerUserDto;
 import bookit.backend.model.entity.Business;
 import bookit.backend.model.entity.Reservation;
 import bookit.backend.model.entity.user.ClientUser;
 import bookit.backend.model.entity.user.WorkerUser;
 import bookit.backend.model.request.AddReservationRequest;
+import bookit.backend.model.response.ReservationOptionsResponse;
+import bookit.backend.model.response.ReservationSlotsResponse;
 import bookit.backend.repository.ReservationRepository;
 import bookit.backend.repository.ServiceRepository;
 import bookit.backend.repository.UserRepository;
@@ -22,10 +25,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,23 +43,61 @@ public class ReservationService {
     private final ModelMapper modelMapper;
 
 
-    public List<ReservationDto> getReservationOptions(Long serviceId, String date) {
+    public ReservationOptionsResponse getReservationOptions(Long serviceId, String date) {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         LocalDate localDate = LocalDate.parse(date, dateFormatter);
 
         ServiceDto serviceDto = servicesService.getServiceById(serviceId).orElse(null);
         if (serviceDto == null) return null;
+        int serviceHours = serviceDto.getDuration().intValue();
+        int serviceMinutes = (int) ((serviceDto.getDuration() - serviceHours) * 60);
+
         BusinessDto businessDto = businessService.getBusiness(serviceDto.getBusinessId()).orElse(null);
         if (businessDto == null) return null;
         List<LocalTime> workingHours = workingHoursService.getWorkingHoursForDate(localDate, businessDto.getId());
 
-        List<ReservationDto> reservationDtoList = reservationRepository.findAllByBusiness_Id(businessDto.getId())
+        List<ReservationDto> reservations = reservationRepository.findAllByBusiness_Id(businessDto.getId())
                 .stream()
                 .filter(r -> r.getDate().toLocalDate().isEqual(localDate))
                 .map(r -> modelMapper.map(r, ReservationDto.class))
-                .sorted(Comparator.comparing(ReservationDto::getDate))
                 .toList();
-        return reservationDtoList;
+
+        Map<WorkerUserDto, List<ReservationDto>> workersReservations = reservations
+                .stream()
+                .collect(Collectors.groupingBy(ReservationDto::getWorker));
+
+        return new ReservationOptionsResponse(serviceDto, filterPossibleSlots(workersReservations, serviceHours, serviceMinutes, workingHours, businessDto.getWorkers()));
+    }
+
+    private List<ReservationSlotsResponse> filterPossibleSlots(Map<WorkerUserDto, List<ReservationDto>> workersReservations,
+                                                               int serviceHours, int serviceMinutes,
+                                                               List<LocalTime> workingHours,
+                                                               List<WorkerUserDto> workers) {
+//        List<ReservationSlotsResponse> workersSlots = new ArrayList<>();
+//        for(var entry : workersReservations.entrySet()) {
+//            workersSlots.add(entry.getKey(), new ArrayList<>());
+//        }
+
+        List<ReservationSlotsResponse> slotsResponseList = new ArrayList<>();
+        for(var worker : workers) {
+            List<LocalTime> slots = new ArrayList<>();
+            for(LocalTime slot = workingHours.get(0);
+                slot.plusHours(serviceHours).plusMinutes(serviceMinutes).isBefore(workingHours.get(1));
+                slot = slot.plusMinutes(15))
+            {
+                boolean isFree = true;
+                for (var reservation : workersReservations.get(worker)) {
+                    if (reservation.isOverlapped(slot, slot.plusHours(serviceHours).plusMinutes(serviceMinutes))) {
+                        isFree = false;
+                        break;
+                    }
+                }
+                if (isFree) slots.add(slot);
+            }
+            ReservationSlotsResponse slotsResponse = new ReservationSlotsResponse(worker, slots);
+            slotsResponseList.add(slotsResponse);
+        }
+        return slotsResponseList;
     }
 
     public HttpStatus addReservation(AddReservationRequest request, long serviceId, long clientId) {

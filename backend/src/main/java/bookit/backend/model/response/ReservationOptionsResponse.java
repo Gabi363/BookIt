@@ -4,7 +4,6 @@ import bookit.backend.model.dto.ServiceDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-import java.text.SimpleDateFormat;
 import java.util.List;
 
 @Data
@@ -12,5 +11,5 @@ import java.util.List;
 public class ReservationOptionsResponse {
 
     private ServiceDto service;
-    private List<SimpleDateFormat> slots;
+    private List<ReservationSlotsResponse> workersSlots;
 }
