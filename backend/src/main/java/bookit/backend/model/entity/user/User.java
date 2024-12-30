@@ -1,5 +1,6 @@
 package bookit.backend.model.entity.user;
 
+import bookit.backend.model.entity.Message;
 import bookit.backend.model.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -9,6 +10,7 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -47,4 +49,10 @@ public class User implements Serializable {
     @Column(name = "is_active", nullable = false)
     @ColumnDefault("true")
     private Boolean isActive;
+
+    @OneToMany(mappedBy = "sender")
+    private List<Message> messagesSent;
+
+    @OneToMany(mappedBy = "receiver")
+    private List<Message> messagesReceived;
 }

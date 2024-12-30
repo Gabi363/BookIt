@@ -26,7 +26,7 @@ public class ReservationController {
 
     @GetMapping("/choose-date/{serviceId}")
     public ResponseEntity<?> chooseDate(@RequestParam String date, @PathVariable long serviceId) {
-        return ResponseEntity.ok(reservationService.getReservationOptions(serviceId, date));    // @TODO nie działa
+        return ResponseEntity.ok(reservationService.getReservationOptions(serviceId, date));
     }
 
     @GetMapping("/day")
