@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,7 +28,6 @@ import java.util.Optional;
 public class UserController {
 
     private final UserService userService;
-    private final ModelMapper modelMapper;
     private final AccountService accountService;
 
     @GetMapping

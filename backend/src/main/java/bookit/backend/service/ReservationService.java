@@ -73,11 +73,6 @@ public class ReservationService {
                                                                int serviceHours, int serviceMinutes,
                                                                List<LocalTime> workingHours,
                                                                List<WorkerUserDto> workers) {
-//        List<ReservationSlotsResponse> workersSlots = new ArrayList<>();
-//        for(var entry : workersReservations.entrySet()) {
-//            workersSlots.add(entry.getKey(), new ArrayList<>());
-//        }
-
         List<ReservationSlotsResponse> slotsResponseList = new ArrayList<>();
         for(var worker : workers) {
             List<LocalTime> slots = new ArrayList<>();
@@ -110,22 +105,47 @@ public class ReservationService {
 
         Business business = service.get().getBusiness();
         Optional<WorkerUser> worker;
-        if(request.getWorkerId() != null) worker = userRepository.findById(request.getWorkerId())
+        worker = userRepository.findById(request.getWorkerId())
                 .map(user -> modelMapper.map(user, WorkerUser.class));
-        else worker = business.getWorkers().stream().findFirst();       // @TODO check if workers are available
         if(worker.isEmpty()) return HttpStatus.NOT_FOUND;
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
+        LocalDateTime date = dateFormatter.parse(request.getDate(), LocalDateTime::from);
+
+        if(reservationCannotBeBooked(date, request.getWorkerId(), business.getId(), service.get().getDuration())) return HttpStatus.CONFLICT;
+
         Reservation reservation = Reservation.builder()
                 .client(client.get())
                 .worker(worker.get())
                 .service(service.get())
-                .date(dateFormatter.parse(request.getDate(), LocalDateTime::from))
+                .date(date)
                 .business(business)
                 .build();
 
         reservationRepository.save(reservation);
         return HttpStatus.CREATED;
+    }
+
+    private boolean reservationCannotBeBooked(LocalDateTime date, long workerId, long businessId, Double duration) {
+        List<LocalTime> workingHours = workingHoursService.getWorkingHoursForDate(date.toLocalDate(), businessId);
+        if(date.isBefore(LocalDateTime.now())
+                || date.toLocalTime().isBefore(workingHours.get(0))
+                || date.toLocalTime().isAfter(workingHours.get(1))) return true;
+
+        List<ReservationDto> reservations = reservationRepository.findAllByBusiness_Id(businessId)
+                .stream()
+                .filter(r -> r.getDate().toLocalDate().isEqual(date.toLocalDate())
+                        && Objects.equals(r.getWorker().getId(), workerId))
+                .map(r -> modelMapper.map(r, ReservationDto.class))
+                .toList();
+        int serviceHours = duration.intValue();
+        int serviceMinutes = (int) ((duration - serviceHours) * 60);
+        for(var r : reservations) {
+            if(r.isOverlapped(date.toLocalTime(), date.toLocalTime().plusHours(serviceHours).plusMinutes(serviceMinutes))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public List<ReservationDto> getReservationsForBusinessOwner(long ownerId) {

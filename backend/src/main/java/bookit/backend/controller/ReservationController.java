@@ -33,7 +33,7 @@ public class ReservationController {
     @Operation(summary = "Get reservations for given day")
     public ResponseEntity<?> getReservationsForDay(@RequestParam String date) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
-        List<ReservationDto> reservations = null;
+        List<ReservationDto> reservations;
         if(!userInfo.isNotBusinessOwner()) {
             reservations = reservationService.getReservationsForBusinessOwner(userInfo.getId());
         }
