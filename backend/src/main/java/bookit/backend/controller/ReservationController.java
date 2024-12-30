@@ -9,10 +9,14 @@ import bookit.backend.service.ReservationService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import net.fortuna.ical4j.data.CalendarOutputter;
+import net.fortuna.ical4j.model.Calendar;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 @RestController
@@ -84,5 +88,29 @@ public class ReservationController {
         if(userInfo.isWorker()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         return ResponseEntity.status(reservationService.deleteReservation(reservationId, userInfo)).build();
+    }
+
+    @GetMapping("/calendar/{reservationId}")
+    @Operation(summary = "Get ics file for chosen reservation")
+    public ResponseEntity<?> getReservationsCalendar(@PathVariable long reservationId) {
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        if(!userInfo.isClient() && !userInfo.isWorker()) return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+
+        try {
+            Calendar calendar = reservationService.exportCalendar(userInfo.getId(), reservationId);
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            CalendarOutputter outputter = new CalendarOutputter();
+            outputter.output(calendar, outputStream);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=event.ics");
+            headers.add(HttpHeaders.CONTENT_TYPE, "text/calendar");
+
+            return new ResponseEntity<>(outputStream.toByteArray(), headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

@@ -37,4 +37,8 @@ public class BusinessAddress implements Serializable {
     @Column(name = "post_code", nullable = false)
     private String postCode;
 
+    @Override
+    public String toString() {
+        return street + " " + localNumber + ", " + postCode + ", " + city;
+    }
 }

@@ -5,18 +5,22 @@ import bookit.backend.model.dto.ReservationDto;
 import bookit.backend.model.dto.ServiceDto;
 import bookit.backend.model.dto.user.WorkerUserDto;
 import bookit.backend.model.entity.Business;
+import bookit.backend.model.entity.BusinessAddress;
 import bookit.backend.model.entity.Reservation;
 import bookit.backend.model.entity.user.ClientUser;
 import bookit.backend.model.entity.user.WorkerUser;
 import bookit.backend.model.request.AddReservationRequest;
 import bookit.backend.model.response.ReservationOptionsResponse;
 import bookit.backend.model.response.ReservationSlotsResponse;
+import bookit.backend.repository.BusinessAddressRepository;
 import bookit.backend.repository.ReservationRepository;
 import bookit.backend.repository.ServiceRepository;
 import bookit.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import net.fortuna.ical4j.model.component.VEvent;
+import net.fortuna.ical4j.model.property.*;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,6 +28,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,6 +45,7 @@ public class ReservationService {
     private final ServicesService servicesService;
     private final BusinessService businessService;
     private final WorkingHoursService workingHoursService;
+    private final BusinessAddressRepository businessAddressRepository;
     private final ModelMapper modelMapper;
 
 
@@ -151,6 +157,7 @@ public class ReservationService {
     public List<ReservationDto> getReservationsForBusinessOwner(long ownerId) {
         return reservationRepository.findAllByBusiness_Owner_Id(ownerId)
                 .stream()
+                .filter(r -> r.getDate().isAfter(LocalDateTime.now()))
                 .map(r -> modelMapper.map(r, ReservationDto.class))
                 .toList();
     }
@@ -158,6 +165,7 @@ public class ReservationService {
     public List<ReservationDto> getReservationsForWorker(long workerId) {
         return reservationRepository.findAllByWorker_Id(workerId)
                 .stream()
+                .filter(r -> r.getDate().isAfter(LocalDateTime.now()))
                 .map(r -> modelMapper.map(r, ReservationDto.class))
                 .toList();
     }
@@ -165,6 +173,7 @@ public class ReservationService {
     public List<ReservationDto> getReservationsForClient(long clientId) {
         return reservationRepository.findAllByClient_Id(clientId)
                 .stream()
+                .filter(r -> r.getDate().isAfter(LocalDateTime.now()))
                 .map(r -> modelMapper.map(r, ReservationDto.class))
                 .toList();
     }
@@ -190,5 +199,41 @@ public class ReservationService {
 
         reservationRepository.delete(reservation.get());
         return HttpStatus.OK;
+    }
+
+    public net.fortuna.ical4j.model.Calendar exportCalendar(long userId, long reservationId) {
+        ReservationDto reservation = reservationRepository.findById(reservationId)
+                .map(r -> modelMapper.map(r, ReservationDto.class))
+                .filter(r -> r.getClient().getId() == userId || r.getWorker().getId() == userId)
+                .orElse(null);
+        if(reservation == null) return null;
+
+        BusinessAddress address = businessAddressRepository.findById(reservation.getBusinessId()).orElse(null);
+        String businessName = businessService.getBusiness(reservation.getBusinessId()).get().getName();
+
+        LocalDateTime startDateTime = reservation.getDate();
+        LocalDateTime endDateTime = reservation.getEndDate();
+
+        Date startDate = Date.from(startDateTime.atZone(ZoneId.systemDefault()).toInstant());
+        Date endDate = Date.from(endDateTime.atZone(ZoneId.systemDefault()).toInstant());
+
+        VEvent event = new VEvent(new net.fortuna.ical4j.model.DateTime(startDate),
+                new net.fortuna.ical4j.model.DateTime(endDate),
+                "Wizyta w " + businessName);
+
+        event.getProperties().add(new Description(reservation.getService().getDescription()));
+        if(address == null) event.getProperties().add(new Location("-"));
+        else event.getProperties().add(new Location(address.toString()));
+
+        Uid uid = new Uid(UUID.randomUUID().toString());
+        event.getProperties().add(uid);
+
+        net.fortuna.ical4j.model.Calendar calendar = new net.fortuna.ical4j.model.Calendar();
+        calendar.getProperties().add(new ProdId("-//BookIt//Reservation 1.0//EN"));
+        calendar.getProperties().add(Version.VERSION_2_0);
+        calendar.getProperties().add(CalScale.GREGORIAN);
+        calendar.getComponents().add(event);
+
+        return calendar;
     }
 }
