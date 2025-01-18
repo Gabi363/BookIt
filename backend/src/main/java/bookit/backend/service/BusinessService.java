@@ -1,6 +1,7 @@
 package bookit.backend.service;
 
 import bookit.backend.model.dto.BusinessDto;
+import bookit.backend.model.dto.BusinessFiltersDto;
 import bookit.backend.model.entity.Business;
 import bookit.backend.model.entity.user.BusinessOwnerUser;
 import bookit.backend.model.enums.BusinessType;
@@ -11,6 +12,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +35,44 @@ public class BusinessService {
         return businessRepository.findAll()
                 .stream()
                 .map(entity -> modelMapper.map(entity, BusinessDto.class))
+                .collect(Collectors.toList());
+    }
+
+    public List<BusinessDto> getBusinessesByFilters(BusinessFiltersDto filters) {
+        if(filters.getMinimumRating() == null) filters.setMinimumRating(0.0);
+        return businessRepository.findAll(filterBy(filters.getBusinessType(), filters.getCity()))
+                .stream()
+                .filter(b -> b.getAverageRating() >= filters.getMinimumRating())
+                .map(entity -> modelMapper.map(entity, BusinessDto.class))
+                .collect(Collectors.toList());
+    }
+
+    public static Specification<Business> filterBy(BusinessType type, String city) {
+        return (root, query, criteriaBuilder) -> {
+            var predicate = criteriaBuilder.conjunction();
+            if (type != null) {
+                predicate = criteriaBuilder.and(predicate, criteriaBuilder.equal(root.get("type"), type));
+            }
+            if (city != null) {
+                predicate = criteriaBuilder.and(predicate, criteriaBuilder.equal(root.get("address").get("city"), city));
+            }
+            return predicate;
+        };
+    }
+
+    public List<BusinessType> getBusinessTypes() {
+        return businessRepository.findAll()
+                .stream()
+                .map(Business::getType)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    public List<String> getCities() {
+        return businessRepository.findAll()
+                .stream()
+                .map(b -> b.getAddress().getCity())
+                .distinct()
                 .collect(Collectors.toList());
     }
 

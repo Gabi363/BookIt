@@ -1,8 +1,9 @@
 package bookit.backend.controller;
 
 import bookit.backend.model.dto.BusinessDto;
+import bookit.backend.model.dto.BusinessFiltersDto;
 import bookit.backend.model.request.*;
-import bookit.backend.model.response.BusinessListResponse;
+import bookit.backend.model.response.BusinessListAndFiltersResponse;
 import bookit.backend.model.response.BusinessResponse;
 import bookit.backend.service.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,8 +31,18 @@ public class BusinessController {
 
     @GetMapping
     @Operation(summary = "Get list of all businesses")
-    public BusinessListResponse getBusinesses() {
-        return new BusinessListResponse(businessService.getBusinesses());
+    public BusinessListAndFiltersResponse getBusinesses() {
+        return new BusinessListAndFiltersResponse(businessService.getBusinesses(),
+                                                    businessService.getBusinessTypes(),
+                                                    businessService.getCities());
+    }
+
+    @GetMapping("/filters")
+    @Operation(summary = "Get businesses by filters")
+    public BusinessListAndFiltersResponse getBusinessesByFilters(@RequestBody BusinessFiltersDto filters) {
+        return new BusinessListAndFiltersResponse(businessService.getBusinessesByFilters(filters),
+                                                    businessService.getBusinessTypes(),
+                                                    businessService.getCities());
     }
 
     @GetMapping("/{businessId}")

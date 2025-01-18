@@ -96,4 +96,12 @@ public class UserController {
         HttpStatus status = accountService.deleteUserByEmail(request.getEmail());
         return ResponseEntity.status(status).build();
     }
+
+    @GetMapping("exis")
+    @Operation(summary = "Check if user with given email exists")
+    public ResponseEntity<?> checkIfUserExists(@RequestParam String email) {
+        boolean userExists = userService.getUserByEmail(email).isPresent();
+        if(userExists) return ResponseEntity.status(HttpStatus.CONFLICT).body("User with given e-mail already exists!");
+        return ResponseEntity.ok("Given e-mail does not occur in system.");
+    }
 }
