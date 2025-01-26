@@ -71,6 +71,9 @@ public class ReservationService {
         Map<WorkerUserDto, List<ReservationDto>> workersReservations = reservations
                 .stream()
                 .collect(Collectors.groupingBy(ReservationDto::getWorker));
+        if(workersReservations.isEmpty()) {
+            for(var worker : businessDto.getWorkers()) workersReservations.put(worker, List.of());
+        }
 
         return new ReservationOptionsResponse(serviceDto, filterPossibleSlots(workersReservations, serviceHours, serviceMinutes, workingHours, businessDto.getWorkers()));
     }
