@@ -97,7 +97,7 @@ public class UserController {
         return ResponseEntity.status(status).build();
     }
 
-    @GetMapping("exis")
+    @GetMapping("exist")
     @Operation(summary = "Check if user with given email exists")
     public ResponseEntity<?> checkIfUserExists(@RequestParam String email) {
         boolean userExists = userService.getUserByEmail(email).isPresent();
