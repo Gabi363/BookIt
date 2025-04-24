@@ -29,6 +29,7 @@ public class ReservationController {
     private final AccountService accountService;
 
     @GetMapping("/choose-date/{serviceId}")
+    @Operation(summary = "Get reservation options for given day and service")
     public ResponseEntity<?> chooseDate(@RequestParam String date, @PathVariable long serviceId) {
         return ResponseEntity.ok(reservationService.getReservationOptions(serviceId, date));
     }

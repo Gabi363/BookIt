@@ -56,7 +56,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("register/business")
-    @Operation(summary = "Create new user account")
+    @Operation(summary = "Create new business owner account")
     public ResponseEntity<?> createBusinessOwnerUser(@Valid @RequestBody CreateUserRequest request) {
         request.setUserRole(UserRole.BUSINESS_OWNER);
         Optional<UserDto> user = accountService.createUser(request);

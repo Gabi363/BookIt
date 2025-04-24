@@ -4,6 +4,7 @@ import bookit.backend.model.dto.BusinessDto;
 import bookit.backend.model.dto.BusinessFiltersDto;
 import bookit.backend.model.entity.Business;
 import bookit.backend.model.entity.user.BusinessOwnerUser;
+import bookit.backend.model.entity.user.WorkerUser;
 import bookit.backend.model.enums.BusinessType;
 import bookit.backend.model.request.CreateBusinessRequest;
 import bookit.backend.repository.BusinessRepository;
@@ -28,6 +29,7 @@ public class BusinessService {
 
     private final BusinessRepository businessRepository;
     private final UserRepository userRepository;
+    private final UserService userService;
     private final BusinessAddressService addressService;
     private final ModelMapper modelMapper;
 
@@ -87,6 +89,11 @@ public class BusinessService {
 
     public Optional<Long> getBusinessIdByOwnerId(long ownerId) {
         return businessRepository.findFirstByOwner_Id(ownerId).map(Business::getId);
+    }
+
+    public Optional<Long> getBusinessIdByWorkerId(long workerId) {
+        Optional<WorkerUser> worker = userService.getWorkerUserById(workerId).map(w -> modelMapper.map(w, WorkerUser.class));
+        return worker.flatMap(workerUser -> businessRepository.findFirstByWorkers(List.of(workerUser)).map(Business::getId));
     }
 
     public Optional<BusinessDto> createBusiness(CreateBusinessRequest request, long ownerId) {
