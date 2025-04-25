@@ -32,11 +32,11 @@ public class ReservationDto implements Serializable {
     }
 
     private boolean contains(LocalTime start, LocalTime end) {
-        return date.toLocalTime().isBefore(start) && getEndDate().toLocalTime().isAfter(end);
+        return !date.toLocalTime().isAfter(start) && !getEndDate().toLocalTime().isBefore(end);
     }
 
     private boolean isContained(LocalTime start, LocalTime end) {
-        return date.toLocalTime().isAfter(start) && getEndDate().toLocalTime().isBefore(end);
+        return !date.toLocalTime().isBefore(start) && !getEndDate().toLocalTime().isAfter(end);
     }
 
     private boolean timesEqual(LocalTime start, LocalTime end) {
@@ -44,13 +44,13 @@ public class ReservationDto implements Serializable {
     }
 
     private boolean startsWithinEndsAfter(LocalTime start, LocalTime end) {
-        return date.toLocalTime().isAfter(start) && date.toLocalTime().isBefore(end)
+        return !date.toLocalTime().isBefore(start) && date.toLocalTime().isBefore(end)
                 && getEndDate().toLocalTime().isAfter(end);
     }
 
     private boolean startsBeforeEndsWithin(LocalTime start, LocalTime end) {
-        return date.toLocalTime().isBefore(start)
-                && getEndDate().toLocalTime().isBefore(end) && getEndDate().toLocalTime().isAfter(start);
+        return !date.toLocalTime().isAfter(start)
+                && !getEndDate().toLocalTime().isAfter(end) && getEndDate().toLocalTime().isAfter(start);
     }
 
     public boolean isOverlapped(LocalTime start, LocalTime end) {

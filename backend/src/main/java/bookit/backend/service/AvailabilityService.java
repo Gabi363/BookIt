@@ -76,6 +76,14 @@ public class AvailabilityService {
                 .toList());
     }
 
+    public Map<WorkerUserDto, List<AvailabilityDto>> getAvailabilitiesForDay(LocalDate date, Long businessId) {
+        return availabilityRepository.findAllByBusiness_Id(businessId)
+                .stream()
+                .filter(a -> a.getDate().isEqual(date))
+                .map(a -> modelMapper.map(a, AvailabilityDto.class))
+                .collect(Collectors.groupingBy(AvailabilityDto::getWorker));
+    }
+
     public List<AvailabilityDto> getAvailabilities(String startDate, String endDate, LoggedUserInfo user) {
         Optional<Long> businessId;
         if(!user.isNotBusinessOwner()) {

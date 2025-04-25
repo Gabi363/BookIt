@@ -1,5 +1,6 @@
 package bookit.backend.service;
 
+import bookit.backend.model.dto.AvailabilityDto;
 import bookit.backend.model.dto.BusinessDto;
 import bookit.backend.model.dto.ReservationDto;
 import bookit.backend.model.dto.ServiceDto;
@@ -44,15 +45,14 @@ public class ReservationService {
     private final ServiceRepository serviceRepository;
     private final ServicesService servicesService;
     private final BusinessService businessService;
-    private final WorkingHoursService workingHoursService;
     private final BusinessAddressRepository businessAddressRepository;
+    private final AvailabilityService availabilityService;
     private final ModelMapper modelMapper;
 
 
     public ReservationOptionsResponse getReservationOptions(Long serviceId, String date) {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         LocalDate localDate = LocalDate.parse(date, dateFormatter);
-
         ServiceDto serviceDto = servicesService.getServiceById(serviceId).orElse(null);
         if (serviceDto == null) return null;
         int serviceHours = serviceDto.getDuration().intValue();
@@ -60,8 +60,7 @@ public class ReservationService {
 
         BusinessDto businessDto = businessService.getBusiness(serviceDto.getBusinessId()).orElse(null);
         if (businessDto == null) return null;
-        List<LocalTime> workingHours = workingHoursService.getWorkingHoursForDate(localDate, businessDto.getId());
-
+        Map<WorkerUserDto, List<AvailabilityDto>> workersAvailabilities = availabilityService.getAvailabilitiesForDay(localDate, businessDto.getId());
         List<ReservationDto> reservations = reservationRepository.findAllByBusiness_Id(businessDto.getId())
                 .stream()
                 .filter(r -> r.getDate().toLocalDate().isEqual(localDate))
@@ -75,28 +74,35 @@ public class ReservationService {
             for(var worker : businessDto.getWorkers()) workersReservations.put(worker, List.of());
         }
 
-        return new ReservationOptionsResponse(serviceDto, filterPossibleSlots(workersReservations, serviceHours, serviceMinutes, workingHours, businessDto.getWorkers()));
+        return new ReservationOptionsResponse(serviceDto, filterPossibleSlots(workersReservations, serviceHours, serviceMinutes, workersAvailabilities));
     }
 
     private List<ReservationSlotsResponse> filterPossibleSlots(Map<WorkerUserDto, List<ReservationDto>> workersReservations,
                                                                int serviceHours, int serviceMinutes,
-                                                               List<LocalTime> workingHours,
-                                                               List<WorkerUserDto> workers) {
+                                                               Map<WorkerUserDto, List<AvailabilityDto>> workersAvailabilities) {
         List<ReservationSlotsResponse> slotsResponseList = new ArrayList<>();
-        for(var worker : workers) {
+        for(var entry : workersAvailabilities.entrySet()) {
+            WorkerUserDto worker = entry.getKey();
             List<LocalTime> slots = new ArrayList<>();
-            for(LocalTime slot = workingHours.get(0);
-                slot.plusHours(serviceHours).plusMinutes(serviceMinutes).isBefore(workingHours.get(1));
-                slot = slot.plusMinutes(15))
-            {
-                boolean isFree = true;
-                for (var reservation : workersReservations.get(worker)) {
-                    if (reservation.isOverlapped(slot, slot.plusHours(serviceHours).plusMinutes(serviceMinutes))) {
-                        isFree = false;
-                        break;
+
+            for(var availability : entry.getValue()) {
+                for(LocalTime slot = availability.getStartHour();
+                    slot.plusHours(serviceHours).plusMinutes(serviceMinutes).isBefore(availability.getEndHour());
+                    slot = slot.plusMinutes(15))
+                {
+                    boolean isFree = true;
+                    if(workersReservations.containsKey(worker)) {
+                        for (var reservation : workersReservations.get(worker)) {
+                            if (reservation.isOverlapped(slot, slot.plusHours(serviceHours).plusMinutes(serviceMinutes))) {
+                                isFree = false;
+                                break;
+                            }
+                        }
+                    }
+                    if(isFree){
+                        slots.add(slot);
                     }
                 }
-                if (isFree) slots.add(slot);
             }
             ReservationSlotsResponse slotsResponse = new ReservationSlotsResponse(worker, slots);
             slotsResponseList.add(slotsResponse);
@@ -122,7 +128,6 @@ public class ReservationService {
         LocalDateTime date = dateFormatter.parse(request.getDate(), LocalDateTime::from);
 
         if(reservationCannotBeBooked(date, request.getWorkerId(), business.getId(), service.get().getDuration())) return HttpStatus.CONFLICT;
-
         Reservation reservation = Reservation.builder()
                 .client(client.get())
                 .worker(worker.get())
@@ -136,10 +141,18 @@ public class ReservationService {
     }
 
     private boolean reservationCannotBeBooked(LocalDateTime date, long workerId, long businessId, Double duration) {
-        List<LocalTime> workingHours = workingHoursService.getWorkingHoursForDate(date.toLocalDate(), businessId);
-        if(date.isBefore(LocalDateTime.now())
-                || date.toLocalTime().isBefore(workingHours.get(0))
-                || date.toLocalTime().isAfter(workingHours.get(1))) return true;
+        var availabilities = availabilityService.getAvailabilitiesForDay(date.toLocalDate(), businessId);
+        boolean reservationCannotBeBooked = true;
+        for(var entry : availabilities.entrySet()) {
+            for(var availability : entry.getValue()) {
+                if(!availability.getStartHour().isAfter(date.toLocalTime()) && !availability.getEndHour().isBefore(date.toLocalTime())) {
+                    reservationCannotBeBooked = false;
+                    break;
+                }
+            }
+            if(!reservationCannotBeBooked) break;
+        }
+        if(reservationCannotBeBooked) return true;
 
         List<ReservationDto> reservations = reservationRepository.findAllByBusiness_Id(businessId)
                 .stream()
