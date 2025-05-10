@@ -24,8 +24,8 @@ public abstract class LoyalPoints implements Serializable {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "points_id_seq")
     private Long id;
 
-    @Column(name = "date")
-    private LocalDate date;
+    @Column(name = "update_date")
+    private LocalDate updateDate;
 
     @Column(name = "points_number")
     private int pointsNumber;

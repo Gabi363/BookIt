@@ -59,7 +59,7 @@ public class ReservationController {
         if(!userInfo.isClient()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-
+//        @TODO
         return ResponseEntity.status(reservationService.addReservation(request, serviceId, userInfo.getId())).build();
     }
 

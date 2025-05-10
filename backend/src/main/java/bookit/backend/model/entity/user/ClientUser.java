@@ -24,8 +24,8 @@ public class ClientUser extends User {
     @PrimaryKeyJoinColumn
     private Calendar calendar;
 
-    @OneToMany(mappedBy = "client")
-    private List<ClientPoints> points;
+    @OneToOne(mappedBy = "client")
+    private ClientPoints points;
 
     @OneToMany(mappedBy = "client")
     private List<Reservation> reservations;

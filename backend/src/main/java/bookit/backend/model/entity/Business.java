@@ -58,8 +58,8 @@ public class Business implements Serializable {
     @PrimaryKeyJoinColumn
     private BusinessAddress address;
 
-    @OneToMany(mappedBy = "business")
-    private List<BusinessPoints> points;
+    @OneToOne(mappedBy = "business")
+    private BusinessPoints points;
 
     @OneToMany(mappedBy = "business")
     private List<BusinessWorkingHours> workingHours;

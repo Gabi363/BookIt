@@ -9,7 +9,7 @@ import lombok.Data;
 @Data
 public class BusinessPoints extends LoyalPoints {
 
-    @ManyToOne
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "business_id", nullable = false)
     private Business business;
 }
