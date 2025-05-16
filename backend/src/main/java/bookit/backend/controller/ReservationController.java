@@ -59,7 +59,6 @@ public class ReservationController {
         if(!userInfo.isClient()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-//        @TODO
         return ResponseEntity.status(reservationService.addReservation(request, serviceId, userInfo.getId())).build();
     }
 
@@ -86,7 +85,7 @@ public class ReservationController {
     @Operation(summary = "Delete given reservation")
     public ResponseEntity<?> deleteReservation(@PathVariable long reservationId) {
         LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
-        if(userInfo.isWorker()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if(userInfo.isWorker() || userInfo.isClient()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         return ResponseEntity.status(reservationService.deleteReservation(reservationId, userInfo)).build();
     }
@@ -113,5 +112,14 @@ public class ReservationController {
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @PostMapping("/{reservationId}")
+    @Operation(summary = "Mark the reservation finished")
+    public ResponseEntity<?> markReservationFinished(@PathVariable long reservationId) {
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        if(userInfo.isClient()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
+        return ResponseEntity.status(reservationService.makeTheReservationFinished(reservationId, userInfo.getId(), userInfo.getRole())).build();
     }
 }

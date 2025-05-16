@@ -48,4 +48,7 @@ public class Reservation implements Serializable {
     @Formula(value = "(SELECT s.duration FROM service s WHERE s.id=service_id)")
     private Double duration;
 
+    @Column(name = "finished", nullable = false)
+    private Boolean finished = false;
+
 }

@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,5 +40,24 @@ public class PrizeService {
                 .build();
         prizeRepository.save(prize);
         return HttpStatus.CREATED;
+    }
+
+    public HttpStatus deletePrize(Long id){
+        prizeRepository.deleteById(id);
+        return HttpStatus.OK;
+    }
+
+    public HttpStatus editPrize(Long id, AddPrizeRequest request){
+        Optional<Prize> prizeOptional = prizeRepository.findById(id);
+        if(prizeOptional.isEmpty()) return HttpStatus.NOT_FOUND;
+
+        Prize prize = prizeOptional.get();
+        prize.setPrizeName(request.getPrizeName());
+        prize.setDescription(request.getDescription());
+        prize.setPrice(request.getPrice());
+        prize.setPointsThreshold(request.getPointsThreshold());
+
+        prizeRepository.save(prize);
+        return HttpStatus.OK;
     }
 }

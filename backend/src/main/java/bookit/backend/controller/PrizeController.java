@@ -44,15 +44,22 @@ public class PrizeController {
 
     @DeleteMapping("/{prizeId}")
     @Operation(summary = "Delete prize")
-    public ResponseEntity<?> deletePrize(@PathVariable String prizeId) {
-//        @TODO
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> deletePrize(@PathVariable Long prizeId) {
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        if(userInfo.isNotAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.status(prizeService.deletePrize(prizeId)).build();
     }
 
     @PutMapping("/{prizeId}")
     @Operation(summary = "Edit prize")
-    public ResponseEntity<?> editPrize(@PathVariable String prizeId) {
-//        @TODO
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> editPrize(@PathVariable Long prizeId,
+                                       @RequestBody AddPrizeRequest request) {
+        LoggedUserInfo userInfo = accountService.getLoggedUserInfo();
+        if(userInfo.isNotAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        return ResponseEntity.status(prizeService.editPrize(prizeId, request)).build();
     }
 }

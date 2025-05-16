@@ -20,7 +20,7 @@ public abstract class LoyalPoints implements Serializable {
 
     @Id
     @Column(name = "id", nullable = false)
-    @SequenceGenerator(name = "points_id_seq")
+    @SequenceGenerator(name = "points_id_seq", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "points_id_seq")
     private Long id;
 

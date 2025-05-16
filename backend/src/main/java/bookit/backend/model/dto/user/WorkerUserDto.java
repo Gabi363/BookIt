@@ -14,4 +14,5 @@ public class WorkerUserDto extends UserDto {
 
     private List<WorkerRatingDto> ratings;
     private Double averageRating;
+    private Long businessId;
 }

@@ -4,12 +4,14 @@ import bookit.backend.model.dto.AvailabilityDto;
 import bookit.backend.model.dto.BusinessDto;
 import bookit.backend.model.dto.ReservationDto;
 import bookit.backend.model.dto.ServiceDto;
+import bookit.backend.model.dto.user.BusinessOwnerUserDto;
 import bookit.backend.model.dto.user.WorkerUserDto;
 import bookit.backend.model.entity.Business;
 import bookit.backend.model.entity.BusinessAddress;
 import bookit.backend.model.entity.Reservation;
 import bookit.backend.model.entity.user.ClientUser;
 import bookit.backend.model.entity.user.WorkerUser;
+import bookit.backend.model.enums.UserRole;
 import bookit.backend.model.request.AddReservationRequest;
 import bookit.backend.model.response.ReservationOptionsResponse;
 import bookit.backend.model.response.ReservationSlotsResponse;
@@ -47,7 +49,9 @@ public class ReservationService {
     private final BusinessService businessService;
     private final BusinessAddressRepository businessAddressRepository;
     private final AvailabilityService availabilityService;
+    private final LoyalPointsService loyalPointsService;
     private final ModelMapper modelMapper;
+    private final UserService userService;
 
 
     public ReservationOptionsResponse getReservationOptions(Long serviceId, String date) {
@@ -251,5 +255,29 @@ public class ReservationService {
         calendar.getComponents().add(event);
 
         return calendar;
+    }
+
+    public HttpStatus makeTheReservationFinished(long reservationId, long userId, UserRole userRole) {
+        Optional<Reservation> reservationOptional = reservationRepository.findById(reservationId);
+        if(reservationOptional.isEmpty()) return HttpStatus.NOT_FOUND;
+        Reservation reservation = reservationOptional.get();
+        if(reservation.getFinished()) return HttpStatus.ALREADY_REPORTED;
+
+        if(userRole.equals(UserRole.WORKER)) {
+            Optional<WorkerUserDto> worker = userService.getWorkerUserById(userId);
+            if(worker.isEmpty() || !Objects.equals(reservation.getBusiness().getId(), worker.get().getBusinessId())) {
+                return HttpStatus.FORBIDDEN;
+            }
+        }
+        else if(userRole.equals(UserRole.BUSINESS_OWNER)) {
+            Optional<BusinessOwnerUserDto> businessOwner = userService.getBusinessOwnerUserById(userId);
+            if(businessOwner.isEmpty() || !Objects.equals(reservation.getBusiness().getId(), businessOwner.get().getBusinessId())) {
+                return HttpStatus.FORBIDDEN;
+            }
+        }
+
+        reservation.setFinished(true);
+        reservationRepository.save(reservation);
+        return loyalPointsService.addLoyalPoints(reservation.getClient().getId(), reservation.getBusiness().getId());
     }
 }

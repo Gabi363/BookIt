@@ -2,15 +2,18 @@ package bookit.backend.controller;
 
 import bookit.backend.model.dto.BusinessDto;
 import bookit.backend.model.dto.BusinessFiltersDto;
-import bookit.backend.model.request.*;
+import bookit.backend.model.request.CreateBusinessRequest;
+import bookit.backend.model.request.CreateUserRequest;
+import bookit.backend.model.request.DeleteUserRequest;
 import bookit.backend.model.response.BusinessListAndFiltersResponse;
 import bookit.backend.model.response.BusinessResponse;
-import bookit.backend.service.*;
+import bookit.backend.service.AccountService;
+import bookit.backend.service.BusinessService;
+import bookit.backend.service.LoggedUserInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,9 +28,6 @@ public class BusinessController {
 
     private final BusinessService businessService;
     private final AccountService accountService;
-    private final ServicesService servicesService;
-    private final WorkingHoursService workingHoursService;
-    private final ModelMapper modelMapper;
 
     @GetMapping
     @Operation(summary = "Get list of all businesses")
