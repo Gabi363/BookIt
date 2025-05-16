@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Table(name = "prizes")
 @Data
@@ -31,4 +33,7 @@ public class Prize {
 
     @Column(name = "points_threshold", nullable = false)
     Long pointsThreshold;
+
+    @OneToMany(mappedBy = "prize")
+    private List<UserPrize> userPrizes;
 }

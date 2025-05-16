@@ -2,9 +2,13 @@ package bookit.backend.service;
 
 import bookit.backend.model.dto.PrizeDto;
 import bookit.backend.model.entity.Business;
+import bookit.backend.model.entity.Prize;
+import bookit.backend.model.entity.UserPrize;
 import bookit.backend.model.entity.points.BusinessPoints;
 import bookit.backend.model.entity.points.ClientPoints;
+import bookit.backend.model.entity.user.BusinessOwnerUser;
 import bookit.backend.model.entity.user.ClientUser;
+import bookit.backend.model.entity.user.User;
 import bookit.backend.model.enums.Points;
 import bookit.backend.repository.*;
 import jakarta.transaction.Transactional;
@@ -15,7 +19,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Random;
 
 @Service
 @Log4j2
@@ -30,6 +37,7 @@ public class LoyalPointsService {
     private final ClientPointsRepository clientPointsRepository;
     private final BusinessPointsRepository businessPointsRepository;
     private final PrizeService prizeService;
+    private final UserPrizeRepository userPrizeRepository;
 
     public HttpStatus addLoyalPoints(long clientId, long businessId) {
         try {
@@ -51,7 +59,8 @@ public class LoyalPointsService {
             ClientPoints clientPoints = clientPointsOptional.get();
             clientPoints.setPointsNumber(clientPoints.getPointsNumber() + Points.CLIENT_POINTS.getValue());
             loyalPointsRepository.save(clientPoints);
-            checkClientPoints(clientPoints.getPointsNumber());
+            User user = userRepository.findById(clientId).orElse(null);
+            checkClientPoints(clientPoints.getPointsNumber(), user);
             return;
         }
         ClientPoints clientPoints = ClientPoints.builder()
@@ -60,19 +69,27 @@ public class LoyalPointsService {
                 .client(client.get())
                 .build();
         loyalPointsRepository.save(clientPoints);
-        checkClientPoints(clientPoints.getPointsNumber());
+        User user = userRepository.findById(clientId).orElse(null);
+        checkClientPoints(clientPoints.getPointsNumber(), user);
     }
 
-    private void checkClientPoints(int pointsNumber) {
-        PrizeDto prizeDto = prizeService.getPrizes()
+    private void checkClientPoints(int pointsNumber, User client) {
+        PrizeDto prizeDto = prizeService.getMaxPrize(pointsNumber);
+        if(prizeDto == null || client == null) return;
+
+        UserPrize userPrize = userPrizeRepository.getUserPrizesByUser(client)
                 .stream()
-                .filter(prize -> prize.getPointsThreshold() <= pointsNumber)
-                .min((p1, p2) -> p1.getPointsThreshold().compareTo(p2.getPointsThreshold()))
+                .max(Comparator.comparing(up -> up.getPrize().getPointsThreshold()))
                 .orElse(null);
 
-        if(prizeDto == null) return;
-        log.info("Prize found: {}", prizeDto);
-
+        if(userPrize != null && Objects.equals(userPrize.getPrize().getId(), prizeDto.getId())) return;
+        UserPrize newUserPrize = UserPrize.builder()
+                .user(client)
+                .prize(modelMapper.map(prizeDto, Prize.class))
+                .used(false)
+                .discountCode(generateDiscountCode())
+                .build();
+        userPrizeRepository.save(newUserPrize);
     }
 
     private void addBusinessPoints(long businessId) throws Exception {
@@ -84,7 +101,7 @@ public class LoyalPointsService {
             BusinessPoints businessPoints = businessPointsOptional.get();
             businessPoints.setPointsNumber(businessPoints.getPointsNumber() + Points.BUSINESS_POINTS.getValue());
             loyalPointsRepository.save(businessPoints);
-            checkClientPoints(businessPoints.getPointsNumber());
+            checkBusinessPoints(businessPoints.getPointsNumber(), businessOptional.get().getOwner());
             return;
         }
         BusinessPoints businessPoints = BusinessPoints.builder()
@@ -93,6 +110,40 @@ public class LoyalPointsService {
                 .business(businessOptional.get())
                 .build();
         loyalPointsRepository.save(businessPoints);
-        checkClientPoints(businessPoints.getPointsNumber());
+        checkBusinessPoints(businessPoints.getPointsNumber(), businessOptional.get().getOwner());
+    }
+
+    private void checkBusinessPoints(int pointsNumber, BusinessOwnerUser businessOwnerUser) {
+        PrizeDto prizeDto = prizeService.getMaxPrize(pointsNumber);
+
+        if(prizeDto == null || businessOwnerUser == null) return;
+        UserPrize userPrize = userPrizeRepository.getUserPrizesByUser(businessOwnerUser)
+                .stream()
+                .max(Comparator.comparing(up -> up.getPrize().getPointsThreshold()))
+                .orElse(null);
+
+        if(userPrize != null && Objects.equals(userPrize.getPrize().getId(), prizeDto.getId())) return;
+        UserPrize newUserPrize = UserPrize.builder()
+                .user(businessOwnerUser)
+                .prize(modelMapper.map(prizeDto, Prize.class))
+                .used(false)
+                .discountCode(generateDiscountCode())
+                .build();
+        userPrizeRepository.save(newUserPrize);
+    }
+
+    private String generateDiscountCode() {
+        String generatedString;
+        int leftLimit = 97; // letter 'a'
+        int rightLimit = 122; // letter 'z'
+        int targetStringLength = 10;
+        Random random = new Random();
+        do {
+            generatedString = random.ints(leftLimit, rightLimit + 1)
+                    .limit(targetStringLength)
+                    .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                    .toString();
+        } while(!userPrizeRepository.getUserPrizesByDiscountCode(generatedString).isEmpty());
+        return generatedString;
     }
 }

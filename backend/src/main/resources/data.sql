@@ -47,3 +47,15 @@ INSERT INTO ratings (id, comment, grade, client_id) VALUES ((SELECT nextval('rat
 INSERT INTO worker_ratings (id, worker_user_id) VALUES ((SELECT last_value FROM ratings_id_seq), 6);
 
 INSERT INTO reservartions (id, date, business_id, client_user_id, service_id, worker_user_id) VALUES ((SELECT nextval('reservation_id_seq')), '2025-02-25', (SELECT last_value FROM business_id_seq), 2, (SELECT last_value FROM service_id_seq), 6);
+
+INSERT INTO prizes (id, description, points_threshold, price, prize_name) VALUES ((SELECT nextval('prize_id_seq')),"Brawo! Pierwsze kroki za tobą. Trzymaj tak dalej!",30,20,"Pierwsze koty za płoty!");
+INSERT INTO prizes (id, description, points_threshold, price, prize_name) VALUES ((SELECT nextval('prize_id_seq')),"Idzie ci coraz lepiej!",60,30,"Młody Padawan");
+INSERT INTO prizes (id, description, points_threshold, price, prize_name) VALUES ((SELECT nextval('prize_id_seq')),"Już sporo za Tobą!",120,50,"Uczeń goni mistrza");
+INSERT INTO prizes (id, description, points_threshold, price, prize_name) VALUES ((SELECT nextval('prize_id_seq')),"Można się od Ciebie uczyć!",200,70,"Zaawansowany gość");
+INSERT INTO prizes (id, description, points_threshold, price, prize_name) VALUES ((SELECT nextval('prize_id_seq')),"Więcej chyba się nie da!",300,100,"Mistrz wziyt");
+
+INSERT INTO points (id, points_number, update_date) VALUES ((SELECT nextval('points_id_seq')), 40,'2025-05-16');
+
+INSERT INTO client_points (client_id) VALUES ((SELECT last_value FROM users_id_seq));
+
+INSERT INTO user_prizes (id, used, prize_id, user_id, discount_code) VALUES ((SELECT nextval('user_prize_id_seq')), false, 1, (SELECT last_value FROM users_id_seq), 'dyegdwbkhwlo');

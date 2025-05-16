@@ -11,6 +11,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,6 +30,13 @@ public class PrizeService {
                 .stream()
                 .map(prize -> modelMapper.map(prize, PrizeDto.class))
                 .collect(Collectors.toList());
+    }
+
+    public PrizeDto getMaxPrize(int pointsNumber) {
+        return getPrizes().stream()
+                .filter(prize -> prize.getPointsThreshold() <= pointsNumber)
+                .max(Comparator.comparing(PrizeDto::getPointsThreshold))
+                .orElse(null);
     }
 
     public HttpStatus addPrize(AddPrizeRequest request){

@@ -2,6 +2,7 @@ package bookit.backend.model.entity.user;
 
 import bookit.backend.model.entity.Calendar;
 import bookit.backend.model.entity.Reservation;
+import bookit.backend.model.entity.UserPrize;
 import bookit.backend.model.entity.points.ClientPoints;
 import bookit.backend.model.entity.rating.Rating;
 import jakarta.persistence.*;
@@ -32,4 +33,7 @@ public class ClientUser extends User {
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Rating> ratings;
+
+    @OneToMany(mappedBy = "user")
+    private List<UserPrize> userPrizes;
 }
