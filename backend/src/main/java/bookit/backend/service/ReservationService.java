@@ -137,6 +137,7 @@ public class ReservationService {
                 .worker(worker.get())
                 .service(service.get())
                 .date(date)
+                .finished(false)
                 .business(business)
                 .build();
 

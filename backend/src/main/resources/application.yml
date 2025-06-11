@@ -1,8 +1,8 @@
 spring:
   application:
-    name: backend
+    name: bookit
   datasource:
-    url: jdbc:postgresql://localhost:5432/bookit
+    url: jdbc:postgresql://localhost:5432/postgres
     username: bookit
     password: difficult_password
     driver-class-name: org.postgresql.Driver
